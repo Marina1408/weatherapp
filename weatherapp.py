@@ -59,7 +59,7 @@ for char in rp5_page[rp5_temp_value_start:]:
 	else:
 		break
 
-rp5_COND_TAG = '</span><span class="t_1" style="display: none;">°F</span>,</span> '
+rp5_COND_TAG = '<span class="t_0" >°C</span><span class="t_1" style="display: none;">°F</span>,</span> <span class="t_1" style="display: none;">+30..+34 <span class="t_0" >°C</span><span class="t_1" style="display: none;">°F</span>,</span> '
 rp5_cond_tag_size = len(rp5_COND_TAG)
 rp5_cond_tag_index = rp5_page.find(rp5_COND_TAG)
 rp5_cond_value_start = rp5_cond_tag_index + rp5_cond_tag_size
