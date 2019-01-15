@@ -64,7 +64,7 @@ for char in rp5_page[rp5_temp_value_start:]:
 
 
 WINFO_CONTAINER_TAG = '<div class="ArchiveInfo">'
-rp5_COND_TAG = '<span class="t_1" style="display: none;">+25 °F</span>'
+rp5_COND_TAG = '°F</span>'
 rp5_cond_tag_size = len(rp5_COND_TAG)
 rp5_cond_tag_index = rp5_page.find(rp5_COND_TAG,
 	                               rp5_page.find(WINFO_CONTAINER_TAG)) + 2
@@ -76,7 +76,7 @@ for char in rp5_page[rp5_cond_value_start:]:
 	else:
 		break
 
-rp5_COND_TAG2 = '<span class="wv_4" style="display: none;"> (6 Бфрт)</span>'
+rp5_COND_TAG2 = 'Бфрт)</span>'
 rp5_cond_tag_size = len(rp5_COND_TAG2)
 rp5_cond_tag_index = rp5_page.find(rp5_COND_TAG2,
 	                               rp5_page.find(WINFO_CONTAINER_TAG)) 
