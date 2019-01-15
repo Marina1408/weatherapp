@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-""" Weather add project from accuweather and rp5
+""" Weather add project from accuweather, rp5 and sinoptik.ua
 """
 
 import html
@@ -62,14 +62,12 @@ for char in rp5_page[rp5_temp_value_start:]:
 	else:
 		break
 
-WINFO_CONTAINER_TAG = '<div id="forecastShort-content">'
-rp5_COND_TAG = ('<span class="t_0" >°C</span><span class="t_1" style="display:'
-	            ' none;">°F</span>,</span> <span class="t_1" style="display: n'
-	            'one;">+34..+28 <span class="t_0" >°C</span><span class="t_1" '
-	            'style="display: none;">°F</span>,</span> ')
+
+WINFO_CONTAINER_TAG = '<div class="ArchiveInfo">'
+rp5_COND_TAG = '<span class="t_1" style="display: none;">+25 °F</span>'
 rp5_cond_tag_size = len(rp5_COND_TAG)
 rp5_cond_tag_index = rp5_page.find(rp5_COND_TAG,
-	                               rp5_page.find(WINFO_CONTAINER_TAG))
+	                               rp5_page.find(WINFO_CONTAINER_TAG)) + 2
 rp5_cond_value_start = rp5_cond_tag_index + rp5_cond_tag_size
 rp5_cond = ''
 for char in rp5_page[rp5_cond_value_start:]:
@@ -78,10 +76,54 @@ for char in rp5_page[rp5_cond_value_start:]:
 	else:
 		break
 
+rp5_COND_TAG2 = '<span class="wv_4" style="display: none;"> (6 Бфрт)</span>'
+rp5_cond_tag_size = len(rp5_COND_TAG2)
+rp5_cond_tag_index = rp5_page.find(rp5_COND_TAG2,
+	                               rp5_page.find(WINFO_CONTAINER_TAG)) 
+rp5_cond_value_start = rp5_cond_tag_index + rp5_cond_tag_size
+rp5_cond2 = ''
+for char in rp5_page[rp5_cond_value_start:]:
+	if char != '<':
+		rp5_cond2 += char
+	else:
+		break
+
 print('rp5.ua: \n')
 print(f'Temperature: {html.unescape(rp5_temp)}\n')
-print(f'Weather conditions: {rp5_cond}\n')
+print(f'Weather conditions: {rp5_cond+rp5_cond2}\n')
 
 
+SINOPTIK_URL = ('https://ua.sinoptik.ua/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%'
+	            'D0%B0-%D1%80%D1%96%D0%B2%D0%BD%D0%B5')
 
+# getting page from server
+headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64;)'}
+sinoptik_request = Request(SINOPTIK_URL, headers = headers)
+sinoptik_page = urlopen(sinoptik_request).read()
+sinoptik_page = sinoptik_page.decode('utf-8')
 
+SINOPTIK_TEMP_TAG = '<p class="today-temp">'
+sinoptik_temp_tag_size = len(SINOPTIK_TEMP_TAG)
+sinoptik_temp_tag_index = sinoptik_page.find(SINOPTIK_TEMP_TAG)
+sinoptik_temp_value_start = sinoptik_temp_tag_index + sinoptik_temp_tag_size
+sinoptik_temp = ''
+for char in sinoptik_page[sinoptik_temp_value_start:]:
+	if char != '<':
+		sinoptik_temp += char
+	else:
+		break
+
+SINOPTIK_COND_TAG = '<div class="description"> <!--noindex--> '
+sinoptik_cond_tag_size = len(SINOPTIK_COND_TAG)
+sinoptik_cond_tag_index = sinoptik_page.find(SINOPTIK_COND_TAG)
+sinoptik_cond_value_start = sinoptik_cond_tag_index + sinoptik_cond_tag_size
+sinoptik_cond = ''
+for char in sinoptik_page[sinoptik_cond_value_start:]:
+	if char != '<':
+		sinoptik_cond += char
+	else:
+		break
+
+print('SINOPTIK.ua: \n')
+print(f'Temperature: {html.unescape(sinoptik_temp)}\n')
+print(f'Weather conditions: {sinoptik_cond}\n')
