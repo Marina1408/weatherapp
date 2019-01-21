@@ -8,20 +8,20 @@ from urllib.request import urlopen, Request
 
 ACCU_URL = "https://www.accuweather.com/uk/ua/rivne/325590/weather-forecast/325590"
 ACCU_TAGS = ('<span class="large-temp">', '<span class="cond">')
-ACCU_CONTAINER_TAG = ('\n')
+ACCU_CONTAINER_TAG = ('<div class="temp">')
 
 RP5_URL = ('http://rp5.ua/%D0%9F%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0_%D0%B2_%D0%'
 	       'A0%D1%96%D0%B2%D0%BD%D0%BE%D0%BC%D1%83,_%D0%A0%D1%96%D0%B2%D0%'
 	       'BD%D0%B5%D0%BD%D1%81%D1%8C%D0%BA%D0%B0_%D0%BE%D0%B1%D0%BB%D0%B'
 	       '0%D1%81%D1%82%D1%8C')
 RP5_TAGS = ('<span class="t_0" style="display: block;">', '°F</span>')
-RP5_CONTAINER_TAG = ('<div class="ArchiveInfo">', '\n')
+RP5_CONTAINER_TAG = ('<div class="ArchiveTemp">', '<div class="ArchiveInfo">')
 
 
 SINOPTIK_URL = ('https://ua.sinoptik.ua/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%'
 	            'D0%B0-%D1%80%D1%96%D0%B2%D0%BD%D0%B5')
 SINOPTIK_TAGS = ('<p class="today-temp">', '<div class="description"> <!--noindex--> ')
-SINOPTIK_CONTAINER_TAG = ('\n')
+SINOPTIK_CONTAINER_TAG = (' ')
 
 
 def get_request_headers():
@@ -48,7 +48,7 @@ def get_tag_content(page_content, tag, container_tag):
 		i = 0
 		while i < len(container_tag):
 			container = container_tag[i]
-			if page_content.count(container) >= 2:
+			if page_content.count(container) > 1:
 				i += 1
 			else:
 				break
@@ -56,7 +56,7 @@ def get_tag_content(page_content, tag, container_tag):
 		tag_index = page_content.find(tag, page_content.find(container))
 		return tag_index
 
-	if page_content.count(tag) > 2:
+	if page_content.count(tag) > 1:
 		tag_index = get_container_tag_content(page_content, tag, container_tag)
 	else:
 		tag_index = page_content.find(tag)
@@ -102,4 +102,3 @@ def main():
 
 if __name__ == '__main__':
 	main()
-
