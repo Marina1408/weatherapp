@@ -6,26 +6,20 @@
 import sys
 import html
 import argparse
+from bs4 import BeautifulSoup
 from urllib.request import urlopen, Request
+
 
 ACCU_URL = ('https://www.accuweather.com/uk/ua/rivne/325590/'
             'weather-forecast/325590')
-ACCU_TAGS = ('<span class="large-temp">', '<span class="cond">')
-ACCU_CONTAINER_TAG = ('<div class="temp">')
 
 RP5_URL = ('http://rp5.ua/%D0%9F%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0_%D0%B2_%D0%'
            'A0%D1%96%D0%B2%D0%BD%D0%BE%D0%BC%D1%83,_%D0%A0%D1%96%D0%B2%D0%'
            'BD%D0%B5%D0%BD%D1%81%D1%8C%D0%BA%D0%B0_%D0%BE%D0%B1%D0%BB%D0%B'
            '0%D1%81%D1%82%D1%8C')
-RP5_TAGS = ('<span class="t_0" style="display: block;">', '°F</span>')
-RP5_CONTAINER_TAG = ('<div class="ArchiveTemp">', '<div class="ArchiveInfo">')
-
 
 SINOPTIK_URL = ('https://ua.sinoptik.ua/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%'
                 'D0%B0-%D1%80%D1%96%D0%B2%D0%BD%D0%B5')
-SINOPTIK_TAGS = ('<p class="today-temp">', '<div class="description">'
-                 ' <!--noindex--> ')
-SINOPTIK_CONTAINER_TAG = (' ')
 
 
 def get_request_headers():
@@ -44,56 +38,123 @@ def get_page_source(url):
     return page_source.decode('utf-8')
 
 
-def get_tag_content(page_content, tag, container_tag):
-    """Getting text from the page with tag.
-    """
-    def get_container_tag_content(page_content, tag, container_tag):
-        """Getting text from the page with additional tags.
-        """
-
-        i = 0
-        while i < len(container_tag):
-            container = container_tag[i]
-            if page_content.count(container) > 1:
-                i += 1
-            else:
-                break
-
-        tag_index = page_content.find(tag, page_content.find(container))
-        return tag_index
-
-    if page_content.count(tag) > 1:
-        tag_index = get_container_tag_content(page_content, tag, container_tag)
-    else:
-        tag_index = page_content.find(tag)
-
-    tag_size = len(tag)
-    value_start = tag_index + tag_size
-    content = ''
-    for c in page_content[value_start:]:
-        if c != '<':
-            content += c
-        else:
-            break
-    return content
-
-
-def get_weather_info(page_content, tags, container_tag):
-    """Getting the final result in tuple.
+def get_weather_info_accu(page_content):
+    """Getting the final result in tuple from site accuweather.
     """
 
-    return tuple([get_tag_content(page_content, tag, container_tag)
-                  for tag in tags])
+    city_page = BeautifulSoup(page_content, 'html.parser')
+    current_day_selection = city_page.find('li', 
+                            class_='night current first cl')
+
+    weather_info = {}
+    if current_day_selection:
+        current_day_url = current_day_selection.find('a').attrs['href']
+        if current_day_url:
+            current_day_page = get_page_source(current_day_url)
+            if current_day_page:
+                current_day = \
+                      BeautifulSoup(current_day_page, 'html.parser')
+                weather_details = \
+                       current_day.find('div', attrs={'id' : 'detail-now'})
+                condition = weather_details.find('span', class_='cond')
+                if condition:
+                    weather_info['cond'] = condition.text
+                temp = weather_details.find('span', class_='large-temp')
+                if temp:
+                    weather_info['temp'] = temp.text
+                feal_temp = weather_details.find('span', class_='small-temp')
+                if feal_temp:
+                    weather_info['feal_temp'] = feal_temp.text
+                #wind_info = weather_details.find_all('li', class_='wind')
+                #if wind_info:
+                    #weather_info['wind'] = \
+                         #''.join(map(lambda t: t.text.strip(), wind_info.text))
+    return weather_info
 
 
-def produse_output(provider_name, temp, condition):
+def get_weather_info_rp5(page_content):
+    """Getting the final result in tuple from site rp5.
+    """
+
+    city_page = BeautifulSoup(page_content, 'html.parser')
+    current_day_selection = city_page.find('div', 
+                            class_='forprint-about')
+
+    weather_info = {}
+    if current_day_selection:
+        current_day_url = current_day_selection.findPrevious('a').attrs['href']
+        current_day_url = RP5_URL
+        #current_day_url = 'http://rp5.ua' + current_day_url
+        #print(current_day_url)
+        if current_day_url:
+            current_day_page = get_page_source(current_day_url)
+            if current_day_page:
+                current_day = \
+                      BeautifulSoup(current_day_page, 'html.parser')
+                weather_details = \
+                       current_day.find('div', attrs={'id' : 'archiveString'})
+                weather_details_cond = \
+                        weather_details.find('div', class_='ArchiveInfo')
+                conditions = weather_details.get_text()
+                condition = str(conditions[conditions.find('F,')+3:])
+                if condition:
+                    weather_info['cond'] = condition
+                weather_details_temp = \
+                    weather_details.find('div', class_='ArchiveTemp')
+                temp = weather_details_temp.find('span', class_='t_0')
+                if temp:
+                    weather_info['temp'] = temp.text
+                weather_details_feal_temp = \
+                    weather_details.find('div', class_='ArchiveTempFeeling')
+                feal_temp = weather_details_feal_temp.find('span',
+                                             class_='t_0')
+                if feal_temp:
+                    weather_info['feal_temp'] = feal_temp.text            
+    return weather_info
+
+
+def get_weather_info_sinoptik(page_content):
+    """Getting the final result in tuple from sinoptik.ua site.
+    """
+
+    city_page = BeautifulSoup(page_content, 'html.parser')
+    #current_day_selection = city_page.find('div', attrs={'id' : 
+                                           #'wrapper'})
+    current_day_selection = city_page
+
+    weather_info = {}
+    if current_day_selection:
+        #current_day_url = current_day_selection.find('a').attrs['href']
+        current_day_url = SINOPTIK_URL
+        if current_day_url:
+            current_day_page = get_page_source(current_day_url)
+            if current_day_page:
+                current_day = \
+                      BeautifulSoup(current_day_page, 'html.parser')
+                weather_details = \
+                       current_day.find('div', class_='tabsContentInner')
+                condition = weather_details.find('div', class_='description')
+                if condition:
+                    weather_info['cond'] = condition.text
+                temp = weather_details.find('p', class_='today-temp')
+                if temp:
+                    weather_info['temp'] = temp.text
+                weather_details_feal_temp = weather_details.find('tr', 
+                                            class_='temperatureSens')
+                feal_temp = weather_details_feal_temp.find('td', 
+                                                  class_='p6 bR cur')
+                if feal_temp:
+                    weather_info['feal_temp'] = feal_temp.text
+    return weather_info   
+
+
+def produse_output(info):
     """Displays the final result of the program
     """
 
-    print(f'\n{provider_name}:\n')
-    print(f'Temperature: {html.unescape(temp)}\n')
-    print(f'Weather conditions: {condition}\n')
-
+    for key, value in info.items():
+        print(f' {key} : {html.unescape(value)}')
+    
 
 def main(argv):
     """Main entry point.
@@ -106,10 +167,9 @@ def main(argv):
     parser.add_argument('command', help='Service name', nargs=1)
     params = parser.parse_args(argv)
 
-    weather_sites = {"AccuWeather": (ACCU_URL, ACCU_TAGS, ACCU_CONTAINER_TAG),
-                     "RP5": (RP5_URL, RP5_TAGS, RP5_CONTAINER_TAG),
-                     "SINOPTIK.UA": (SINOPTIK_URL, SINOPTIK_TAGS,
-                                     SINOPTIK_CONTAINER_TAG)}
+    weather_sites = {"AccuWeather": (ACCU_URL),
+                     "RP5": (RP5_URL),
+                     "SINOPTIK.UA": (SINOPTIK_URL)}
 
     if params.command:
         command = params.command[0]
@@ -121,11 +181,18 @@ def main(argv):
             sys.exit(1)
 
     for name in weather_sites:
-        url, tags, container_tag = weather_sites[name]
+        url = weather_sites[name]
         content = get_page_source(url)
-        temp, condition = get_weather_info(content, tags, container_tag)
-        produse_output(name, temp, condition)
-
+        if command == 'accu':
+            print("AccuWeather: \n")
+            produse_output(get_weather_info_accu(content))
+        if command == 'rp5':
+            print("RP5: \n")
+            produse_output(get_weather_info_rp5(content))
+        if command == 'sinoptik':
+            print("SINOPTIK.UA: \n")
+            produse_output(get_weather_info_sinoptik(content))
+        
 
 if __name__ == '__main__':
     main(sys.argv[1:])
