@@ -46,16 +46,17 @@ def get_weather_info_accu(page_content, day):
     weather_info = {}
     if day == 'current':
         current_day_selection = city_page.find('li', 
-                            class_='day current first cl')        
+                            class_='day current first cl') or city_page.find(
+                            'li', class_='night current first cl')      
         if current_day_selection:
             current_day_url = current_day_selection.find('a').attrs['href']
             if current_day_url:
                 current_day_page = get_page_source(current_day_url)
                 if current_day_page:
-                    current_day = \
-                            BeautifulSoup(current_day_page, 'html.parser')
-                    weather_details = \
-                       current_day.find('div', attrs={'id' : 'detail-now'})
+                    current_day = BeautifulSoup(current_day_page,
+                                                'html.parser')
+                    weather_details = current_day.find('div',
+                                               attrs={'id' : 'detail-now'})
                     condition = weather_details.find('span', class_='cond')
                     if condition:
                         weather_info['cond'] = condition.text
@@ -73,10 +74,10 @@ def get_weather_info_accu(page_content, day):
             if tomorrow_day_url:
                 tomorrow_day_page = get_page_source(tomorrow_day_url)
                 if tomorrow_day_page:
-                    tomorrow_day = \
-                             BeautifulSoup(tomorrow_day_page, 'html.parser')
-                    weather_details = \
-                       tomorrow_day.find('div', attrs={'id' : 'detail-day-night'})
+                    tomorrow_day = BeautifulSoup(tomorrow_day_page,
+                                                 'html.parser')
+                    weather_details = tomorrow_day.find('div', 
+                                          attrs={'id' : 'detail-day-night'})
                     condition = weather_details.find('div', class_='cond')
                     if condition:
                         weather_info['cond'] = condition.text
@@ -102,13 +103,18 @@ def get_weather_info_rp5(page_content):
     if current_day_selection:
         current_day_url = current_day_selection.findPrevious('a').attrs['href']
         current_day_url = RP5_URL
-        #current_day_url = 'http://rp5.ua' + current_day_url
-        #print(current_day_url)
+        # current_day_url = 'http://rp5.ua' + '/Weather_in_Rivne'
+        
+        # print(current_day_url)
+        # current_day_url = bytes(current_day_url, 'utf-8')
+        # print(current_day_url)
+        # current_day_url = current_day_url.decode(utf-8)
+        # print(current_day_url)
+        # current_day_url1 = 'http://rp5.ua' + current_day_url
         if current_day_url:
             current_day_page = get_page_source(current_day_url)
             if current_day_page:
-                current_day = \
-                      BeautifulSoup(current_day_page, 'html.parser')
+                current_day = BeautifulSoup(current_day_page, 'html.parser')
                 weather_details = \
                        current_day.find('div', attrs={'id' : 'archiveString'})
                 weather_details_cond = \
@@ -117,13 +123,13 @@ def get_weather_info_rp5(page_content):
                 condition = str(conditions[conditions.find('F,')+3:])
                 if condition:
                     weather_info['cond'] = condition
-                weather_details_temp = \
-                    weather_details.find('div', class_='ArchiveTemp')
+                weather_details_temp = weather_details.find('div',
+                                                       class_='ArchiveTemp')
                 temp = weather_details_temp.find('span', class_='t_0')
                 if temp:
                     weather_info['temp'] = temp.text
-                weather_details_feal_temp = \
-                    weather_details.find('div', class_='ArchiveTempFeeling')
+                weather_details_feal_temp = weather_details.find('div',
+                                                  class_='ArchiveTempFeeling')
                 feal_temp = weather_details_feal_temp.find('span',
                                              class_='t_0')
                 if feal_temp:
@@ -145,10 +151,9 @@ def get_weather_info_sinoptik(page_content, day):
         if current_day_url:
             current_day_page = get_page_source(current_day_url)
             if current_day_page:
-                current_day = \
-                         BeautifulSoup(current_day_page, 'html.parser')
-                weather_details = \
-                       current_day.find('div', class_='tabsContentInner')
+                current_day = BeautifulSoup(current_day_page, 'html.parser')
+                weather_details = current_day.find('div',
+                                              class_='tabsContentInner')
                 condition = weather_details.find('div', class_='description')
                 if condition:
                     weather_info['cond'] = condition.text
@@ -205,7 +210,8 @@ def main(argv):
 
     parser = argparse.ArgumentParser()
     parser.add_argument('command', help='Service name', nargs=1)
-    parser.add_argument('command2', help='Service name', nargs='?')
+    parser.add_argument('tomorrow', help='Service name', nargs='?')
+    parser.add_argument('write_file', help='Service name', nargs='?')
     params = parser.parse_args(argv)
 
     weather_sites = {"AccuWeather": (ACCU_URL),
@@ -226,23 +232,43 @@ def main(argv):
         url = weather_sites[name]
         content = get_page_source(url)
         if command == 'accu':
-            if params.command2:
+            if params.tomorrow == 'tomorrow':
                 print("AccuWeather tomorrow: \n")
                 produse_output(get_weather_info_accu(content, day='tomorrow'))
+                if params.write_file:
+                    f = open('weatherapp.txt', 'w')
+                    f.write(str(get_weather_info_accu(content, day='tomorrow')))
+                    f.close()
             else:
                 print("AccuWeather: \n")
-                produse_output(get_weather_info_accu(content, day='current')) 
+                produse_output(get_weather_info_accu(content, day='current'))
+                if params.write_file:
+                    f = open('weatherapp.txt', 'w')
+                    f.write(str(get_weather_info_accu(content, day='current')))
+                    f.close()             
         if command == 'rp5':
             print("RP5: \n")
             produse_output(get_weather_info_rp5(content))
+            if params.write_file:
+                    f = open('weatherapp.txt', 'w')
+                    f.write(str(get_weather_info_rp5(content)))
+                    f.close()
         if command == 'sinoptik':
-            if params.command2:
+            if params.tomorrow == 'tomorrow':
                 print("SINOPTIK.UA tomorrow: \n")
                 produse_output(get_weather_info_sinoptik(content, day='tomorrow'))
+                if params.write_file:
+                    f = open('weatherapp.txt', 'w')
+                    f.write(str(get_weather_info_sinoptik(content, day='tomorrow')))
+                    f.close()
             else:
                 print("SINOPTIK.UA: \n")
                 produse_output(get_weather_info_sinoptik(content, day='current'))
-        
+                if params.write_file:
+                    f = open('weatherapp.txt', 'w')
+                    f.write(str(get_weather_info_sinoptik(content, day='current')))
+                    f.close()
+            
 
 if __name__ == '__main__':
     main(sys.argv[1:])
