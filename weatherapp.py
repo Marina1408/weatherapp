@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 
 """ Weather add project from accuweather, rp5 and sinoptik.ua
 """
@@ -6,6 +6,8 @@
 import sys
 import html
 import argparse
+import configparser
+from pathlib import Path
 from bs4 import BeautifulSoup
 from urllib.request import urlopen, Request
 
@@ -235,43 +237,41 @@ def main(argv):
                 print("AccuWeather tomorrow: \n")
                 produse_output(get_weather_info_accu(content, day='tomorrow'))
                 if params.write_file:
-                    f = open('weatherapp.txt', 'w')
-                    f.write(str(get_weather_info_accu(content, 
-                    	        day='tomorrow')))
-                    f.close()
+                    with open('weatherapp.txt', 'w') as f:
+                        f.write('AccuWeather tomorrow: ' + str(
+                            get_weather_info_accu(content, day='tomorrow')))
             else:
                 print("AccuWeather: \n")
                 produse_output(get_weather_info_accu(content, day='current'))
                 if params.write_file:
-                    f = open('weatherapp.txt', 'w')
-                    f.write(str(get_weather_info_accu(content, day='current')))
-                    f.close()
+                    with open('weatherapp.txt', 'w') as f:
+                        f.write('AccuWeather: ' + str(get_weather_info_accu(
+                                                  content, day='current')))
         if command == 'rp5':
             print("RP5: \n")
             produse_output(get_weather_info_rp5(content))
             if params.write_file:
-                f = open('weatherapp.txt', 'w')
-                f.write(str(get_weather_info_rp5(content)))
-                f.close()
+                with open('weatherapp.txt', 'w') as f:
+                    f.write('RP5: ' + str(get_weather_info_rp5(content)))
         if command == 'sinoptik':
             if params.tomorrow == 'tomorrow':
                 print("SINOPTIK.UA tomorrow: \n")
                 produse_output(get_weather_info_sinoptik(
                     content, day='tomorrow'))
                 if params.write_file:
-                    f = open('weatherapp.txt', 'w')
-                    f.write(str(get_weather_info_sinoptik(
-                        content, day='tomorrow')))
-                    f.close()
+                    with open('weatherapp.txt', 'w') as f:
+                        f.write("SINOPTIK.UA tomorrow: " + str(
+                                 get_weather_info_sinoptik(content, 
+                                 day='tomorrow')))
             else:
                 print("SINOPTIK.UA: \n")
                 produse_output(get_weather_info_sinoptik(
                     content, day='current'))
                 if params.write_file:
-                    f = open('weatherapp.txt', 'w')
-                    f.write(str(get_weather_info_sinoptik(content,
-                                day='current')))
-                    f.close()
+                    with open('weatherapp.txt', 'w') as f:
+                        f.write("SINOPTIK.UA: " + str(
+                                          get_weather_info_sinoptik(content,   
+                                          day='current')))
 
 
 if __name__ == '__main__':
