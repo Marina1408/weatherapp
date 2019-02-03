@@ -43,7 +43,7 @@ def get_request_headers():
 
 
 def get_page_source(url):
-    """Getting page from server.
+    """ Getting page from server.
     """
 
     request = Request(url, headers=get_request_headers())
@@ -52,7 +52,7 @@ def get_page_source(url):
 
 
 def get_locations_accu(locations_url):
-    """Getting locations from accuweather.
+    """ Getting locations from accuweather.
     """
 
     locations_page = get_page_source(locations_url)
@@ -67,7 +67,7 @@ def get_locations_accu(locations_url):
 
 
 def get_locations_rp5(locations_url):
-    """Getting locations from rp5.ua.
+    """ Getting locations from rp5.ua.
     """
 
     locations_page = get_page_source(locations_url)
@@ -94,41 +94,56 @@ def get_locations_rp5(locations_url):
     
 
 def get_configuration_file_accu():
+    """ Path to configuration file.
+    """
 
     return Path.home() / CONFIG_FOLDER / CONFIG_FILE_ACCU
 
 
 def get_configuration_file_rp5():
+    """ Path to configuration file.
+    """
     
     return Path.home() / CONFIG_FOLDER / CONFIG_FILE_RP5
 
 
 def get_configuration_file_sinoptik():
+    """ Path to configuration file.
+    """
 
     return Path.home() / CONFIG_FOLDER / CONFIG_FILE_SINOPTIK
 
 
 def save_configuration_accu(name, url):
+    """ Save selected location in AccuWeather site to configuration file.
+    """
 
     parser = configparser.ConfigParser()
     parser[CONFIG_LOCATION] = {'name': name, 'url': url}
-    with open(get_configuration_file_accu(), 'w', encoding='utf-8') as configfile:
+    with open(get_configuration_file_accu(), 'w', 
+              encoding='utf-8') as configfile:
         parser.write(configfile)
 
 
 def save_configuration_rp5(name, url):
+    """ Save selected location in RP5.ua site to configuration file.
+    """
 
     parser = configparser.ConfigParser(interpolation=None)
     parser[CONFIG_LOCATION] = {'name': name, 'url': url}
-    with open(get_configuration_file_rp5(), 'w', encoding='utf-8') as configfile:
+    with open(get_configuration_file_rp5(), 'w', 
+              encoding='utf-8') as configfile:
         parser.write(configfile)
 
 
 def save_configuration_sinoptik(name, url):
+    """ Save selected location in ASinoptik.ua site to configuration file.
+    """
 
     parser = configparser.ConfigParser(interpolation=None)
     parser[CONFIG_LOCATION] = {'name': name, 'url': url}
-    with open(get_configuration_file_sinoptik(), 'w', encoding='utf-8') as configfile:
+    with open(get_configuration_file_sinoptik(), 'w', 
+                                    encoding='utf-8') as configfile:
         parser.write(configfile)
 
 
@@ -172,8 +187,8 @@ def get_configuration_sinoptik():
 
 
 def configurate_accu():
-    """Displays the list of locations for the user to select
-       from AccuWeather.
+    """ Displays the list of locations for the user to select
+        from AccuWeather.
     """
 
     locations = get_locations_accu(ACCU_BROWSE_LOCATIONS)
@@ -188,8 +203,8 @@ def configurate_accu():
 
 
 def configurate_rp5():
-    """Displays the list of locations for the user to select
-       from RP5.ua.
+    """ Displays the list of locations for the user to select
+        from RP5.ua.
     """
 
     locations = get_locations_rp5(RP5_BROWSE_LOCATIONS)
@@ -204,7 +219,7 @@ def configurate_rp5():
 
 
 def configurate_sinoptik():
-    """Asking the user to input the city.
+    """ Asking the user to input the city.
     """
   
     base_url = 'https://ua.sinoptik.ua'
@@ -217,13 +232,13 @@ def configurate_sinoptik():
     save_configuration_sinoptik(location, url)
 
 
-def get_weather_info_accu(page_content, day='current'):
-    """Getting the final result in tuple from site accuweather.
+def get_weather_info_accu(page_content, tomorrow=False):
+    """ Getting the final result in tuple from site accuweather.
     """
 
     city_page = BeautifulSoup(page_content, 'html.parser')
     weather_info = {}
-    if day == 'current':
+    if not tomorrow:
         current_day_selection = city_page.find\
                       ('li', class_='day current first cl') or city_page.find\
                       ('li', class_='night current first cl')
@@ -246,7 +261,7 @@ def get_weather_info_accu(page_content, day='current'):
                         'span', class_='small-temp')
                     if feal_temp:
                         weather_info['feal_temp'] = feal_temp.text
-    if day == 'tomorrow':
+    else:
         tomorrow_day_selection = city_page.find('li',
                                                 class_='day hv cl')
         if tomorrow_day_selection:
@@ -264,20 +279,21 @@ def get_weather_info_accu(page_content, day='current'):
                     temp = weather_details.find('span', class_='large-temp')
                     if temp:
                         weather_info['temp'] = temp.text
-                    feal_temp = weather_details.find('span', class_='realfeel')
+                    feal_temp = weather_details.find('span', 
+                                                     class_='realfeel')
                     if feal_temp:
                         weather_info['feal_temp'] = feal_temp.text
 
     return weather_info
 
 
-def get_weather_info_rp5(page_content, day='current'):
-    """Getting the final result in tuple from site rp5.
+def get_weather_info_rp5(page_content, tomorrow=False):
+    """ Getting the final result in tuple from site rp5.
     """
 
     city_page = BeautifulSoup(page_content, 'html.parser')
     weather_info = {}
-    if day == 'current':
+    if not tomorrow:
         current_day_selection = city_page.find('div',
                                                class_='forprint-about')
         if current_day_selection:
@@ -288,7 +304,8 @@ def get_weather_info_rp5(page_content, day='current'):
             if current_day_url:
                 current_day_page = get_page_source(current_day_url)
                 if current_day_page:
-                    current_day = BeautifulSoup(current_day_page, 'html.parser')
+                    current_day = BeautifulSoup(current_day_page, 
+                                                'html.parser')
                     weather_details = \
                         current_day.find('div', attrs={'id': 'archiveString'})
                     weather_details_cond = \
@@ -308,7 +325,7 @@ def get_weather_info_rp5(page_content, day='current'):
                                                            class_='t_0')
                     if feal_temp:
                         weather_info['feal_temp'] = feal_temp.text
-    if day == 'tomorrow':
+    else:
         tomorrow_day_selection = city_page.find('div',
                                                class_='forprint-about')
         if tomorrow_day_selection:
@@ -341,14 +358,14 @@ def get_weather_info_rp5(page_content, day='current'):
     return weather_info
 
 
-def get_weather_info_sinoptik(page_content, day='current'):
-    """Getting the final result in tuple from sinoptik.ua site.
+def get_weather_info_sinoptik(page_content, tomorrow=False):
+    """ Getting the final result in tuple from sinoptik.ua site.
     """
 
     city_page = BeautifulSoup(page_content, 'html.parser')
     weather_info = {}
     weather_details = city_page.find('div', class_='tabsContent')
-    if day == 'current':
+    if not tomorrow:
         weather_details = city_page.find('div', class_='tabsContent')
         condition_weather_details = weather_details.find('div', 
                                       class_='wDescription clearfix')
@@ -364,7 +381,7 @@ def get_weather_info_sinoptik(page_content, day='current'):
         feal_temp = weather_details_feal_temp.find('td', class_='p5 cur')
         if feal_temp:
             weather_info['feal_temp'] = feal_temp.text
-    if day == 'tomorrow':
+    else:
         weather_details = city_page.find('div', attrs={'id': 'bd2'})
         condition = weather_details.find(
                     'div', class_='weatherIco d300')
@@ -381,7 +398,7 @@ def get_weather_info_sinoptik(page_content, day='current'):
 
 
 def produse_output(city_name, info):
-    """Displays the final result of the program
+    """ Displays the final result of the program
     """
 
     print(f'{city_name}')
@@ -390,84 +407,70 @@ def produse_output(city_name, info):
         print(f' {key} : {html.unescape(value)}')
 
 
-def get_accu_weather_info(day='', write=''):
-    """Displays the weather information from AccuWeather site to current or
-       tomorrow day, records this informations in a text file if you want.
+def get_accu_weather_info(tomorrow=False, write=False):
+    """ Displays the weather information from AccuWeather site to current or
+        tomorrow day, records this informations in a text file if you want.
     """
 
     city_name, city_url = get_configuration_accu()
     content = get_page_source(city_url)
 
-    if day == 'tomorrow':
-        print("AccuWeather tomorrow: \n" + '-'*20)
-        produse_output(city_name, get_weather_info_accu(content, 
-                                                        day='tomorrow'))
-        if write == 1:
-            with open('weatherapp.txt', 'w') as f:
-                f.write('AccuWeather tomorrow: ' + str(
-                            get_weather_info_accu(content, day='tomorrow')))
+    if not tomorrow:
+        print("AccuWeather today: \n" + '-'*20)
     else:
-        print("AccuWeather: \n" + '-'*20)
-        produse_output(city_name, get_weather_info_accu(content))
-        if write == 1:
-            with open('weatherapp.txt', 'w') as f:
-                f.write('AccuWeather: ' + str(get_weather_info_accu(content)))
+        print("AccuWeather tomorrow: \n" + '-'*20)
+    produse_output(city_name, get_weather_info_accu(content, 
+                                                    tomorrow=tomorrow))
+    if write==True:
+        with open('weatherapp.txt', 'w') as f:
+            f.write('AccuWeather tomorrow: ' + str(
+                    get_weather_info_accu(content, tomorrow=tomorrow)))
+    
 
-
-def get_rp5_weather_info(day='', write=''):
-    """Displays the weather information from RP5.ua site to current or
-       tomorrow day, records this informations in a text file if you want.
+def get_rp5_weather_info(tomorrow=False, write=False):
+    """ Displays the weather information from RP5.ua site to current or
+        tomorrow day, records this informations in a text file if you want.
     """
 
     city_name, city_url = get_configuration_rp5()
     content = get_page_source(city_url)
 
-    if day == 'tomorrow':
-        print("RP5 tomorrow: \n" + '-'*20)
-        produse_output(city_name, get_weather_info_rp5(content, 
-                                                       day='tomorrow'))
-        if write == 1:
-            with open('weatherapp.txt', 'w') as f:
-                f.write('RP5 tomorrow: ' + str(
-                            get_weather_info_rp5(content, day='tomorrow')))
+    if not tomorrow:
+        print("RP5 today: \n" + '-'*20)
     else:
-        print("RP5: \n" + '-'*20)
-        produse_output(city_name, get_weather_info_rp5(content, 
-                                                       day='current'))
-        if write == 1:
-            with open('weatherapp.txt', 'w') as f:
-                f.write('RP5: ' + str(get_weather_info_rp5(
-                                              content, day='current')))
+        print("RP5 tomorrow: \n" + '-'*20)
+    produse_output(city_name, get_weather_info_rp5(content, 
+                                                       tomorrow=tomorrow))
+
+    if write==True:
+        with open('weatherapp.txt', 'w') as f:
+            f.write('RP5 tomorrow: ' + str(
+                            get_weather_info_rp5(content, tomorrow=tomorrow)))
 
 
-def get_sinoptik_weather_info(day='', write=''):
-    """Displays the weather information from sinoptik site to current or
-       tomorrow day, records this informations in a text file if you want.
+def get_sinoptik_weather_info(tomorrow=False, write=False):
+    """ Displays the weather information from sinoptik site to current or
+        tomorrow day, records this informations in a text file if you want.
     """
 
     city_name, city_url = get_configuration_sinoptik()
     content = get_page_source(city_url)
 
-    if day == 'tomorrow':
-        print("SINOPTIK.UA tomorrow: \n" + '-'*20)
-        produse_output(city_name, get_weather_info_sinoptik(content, 
-                                                       day='tomorrow'))
-        if write == 1:
-            with open('weatherapp.txt', 'w') as f:
-                f.write('SINOPTIK.UA tomorrow: ' + str(
-                                get_weather_info_sinoptik(content, 
-                                day='tomorrow')))
+    if not tomorrow:
+        print("SINOPTIK.UA today: \n" + '-'*20)
     else:
-        print("SINOPTIK.UA: \n" + '-'*20)
-        produse_output(city_name, get_weather_info_sinoptik(content))
-        if write == 1:
-            with open('weatherapp.txt', 'w') as f:
-                f.write('SINOPTIK.UA: ' + str(get_weather_info_sinoptik(
-                                              content)))
+        print("SINOPTIK.UA tomorrow: \n" + '-'*20)
+    produse_output(city_name, get_weather_info_sinoptik(content, 
+                                                       tomorrow=tomorrow))
+    if write==True:
+        with open('weatherapp.txt', 'w') as f:
+            f.write('SINOPTIK.UA: ' + str(
+                                        get_weather_info_sinoptik(content, 
+                                        tomorrow=tomorrow)))
 
 
 def main(argv):
-    """Main entry point.
+    """ Main entry point.
     """
 
     KNOWN_COMMANDS = {'accu': get_accu_weather_info, 'config_accu': 
@@ -478,29 +481,18 @@ def main(argv):
 
     parser = argparse.ArgumentParser()
     parser.add_argument('command', help='Service name', nargs=1)
-    parser.add_argument('tomorrow', help='Service name', nargs='?')
-    parser.add_argument('write_file', help='Service name', nargs='?')
+    parser.add_argument('--tomorrow', help='weather for tomorrow day', 
+                        action = 'store_true')
+    parser.add_argument('--write_file', 
+                        help='write the weather info to the text file', 
+                        action = 'store_true')
     params = parser.parse_args(argv)
 
     if params.command:
         command = params.command[0]
         if command in KNOWN_COMMANDS:
-            if params.tomorrow:
-                day = params.tomorrow
-                if day == 'tomorrow':
-                    if params.write_file:
-                        write = params.write_file
-                        KNOWN_COMMANDS[command](day='tomorrow', write=1)
-                    else:
-                        KNOWN_COMMANDS[command](day='tomorrow')
-                if day == 'current':
-                    if params.write_file:
-                        write = params.write_file
-                        KNOWN_COMMANDS[command](write=1)
-                    else:
-                        KNOWN_COMMANDS[command]()
-            else:
-                KNOWN_COMMANDS[command]()                            
+            KNOWN_COMMANDS[command](tomorrow=params.tomorrow, 
+                                    write=params.write_file)                           
         else:
             print("Unknown command provided!")
             sys.exit(1)
