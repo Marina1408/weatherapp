@@ -473,11 +473,13 @@ def main(argv):
     """ Main entry point.
     """
 
-    KNOWN_COMMANDS = {'accu': get_accu_weather_info, 'config_accu': 
-                       configurate_accu, 'rp5': get_rp5_weather_info,
-                       'config_rp5': configurate_rp5, 'sinoptik': 
-                       get_sinoptik_weather_info, 'config_sinoptik': 
-                       configurate_sinoptik}  
+    KNOWN_COMMANDS = {'accu': get_accu_weather_info, 'rp5': 
+                       get_rp5_weather_info, 'sinoptik': 
+                       get_sinoptik_weather_info}
+
+    CONFIG_COMANDS = {'config_accu': configurate_accu, 'config_rp5': 
+                       configurate_rp5, 'config_sinoptik': 
+                       configurate_sinoptik}
 
     parser = argparse.ArgumentParser()
     parser.add_argument('command', help='Service name', nargs=1)
@@ -492,7 +494,9 @@ def main(argv):
         command = params.command[0]
         if command in KNOWN_COMMANDS:
             KNOWN_COMMANDS[command](tomorrow=params.tomorrow, 
-                                    write=params.write_file)                           
+                                    write=params.write_file) 
+        elif command in CONFIG_COMANDS:
+            CONFIG_COMANDS[command]()
         else:
             print("Unknown command provided!")
             sys.exit(1)
