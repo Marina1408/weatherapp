@@ -5,6 +5,8 @@
 
 import sys
 import html
+import time
+import hashlib
 import argparse
 import configparser
 import urllib.parse
@@ -34,6 +36,9 @@ CONFIG_FILE_RP5 = 'rp5_weatherapp.ini'
 CONFIG_FILE_SINOPTIK = 'sinoptik_weatherapp.ini'
 CONFIG_FOLDER = 'weatherapp_ini'
 
+CACHE_DIR = '.wappcache '
+CACH_TIME = 300
+
 
 def get_request_headers():
     """Getting headers of the request.
@@ -42,20 +47,73 @@ def get_request_headers():
     return {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64;)'}
 
 
-def get_page_source(url):
+def get_cache_directory():
+    """ Path to cach directory.
+    """
+
+    return Path.home() / CACHE_DIR
+
+
+def get_url_hash(url):
+    return hashlib.md5(url.encode('utf-8')).hexdigest()
+
+
+def save_cache(url, page_source):
+    """ Save page source data to file.
+    """
+
+    url_hash = get_url_hash(url)
+    cache_dir = get_cache_directory()
+    if not cache_dir.exists():
+        cache_dir.mkdir(parents=True)
+
+    with (cache_dir / url_hash).open('wb') as cache_file:
+        cache_file.write(page_source)
+
+
+def is_valid(path):
+    """ Check if current cache file is valid.
+    """
+
+    return (time.time() - path.stat().st_mtime) < CACH_TIME
+
+
+def get_cache(url):
+    """ Return cache data if any.
+    """
+
+    cache = b''
+    url_hash = get_url_hash(url)
+    cache_dir = get_cache_directory()
+    if cache_dir.exists():
+        cache_path = cache_dir / url_hash
+        if cache_path.exists() and is_valid(cache_path):
+            with cache_path.open('rb') as cache_file:
+                cache = cache_file.read()
+
+    return cache
+
+
+def get_page_source(url, refresh=False):
     """ Getting page from server.
     """
 
-    request = Request(url, headers=get_request_headers())
-    page_source = urlopen(request).read()
+    cache = get_cache(url)
+    if cache and not refresh:
+        page_source = cache
+    else:
+        request = Request(url, headers=get_request_headers())
+        page_source = urlopen(request).read()
+        save_cache(url, page_source)
+
     return page_source.decode('utf-8')
 
 
-def get_locations_accu(locations_url):
+def get_locations_accu(locations_url, refresh=False):
     """ Getting locations from accuweather.
     """
 
-    locations_page = get_page_source(locations_url)
+    locations_page = get_page_source(locations_url, refresh=refresh)
     soup = BeautifulSoup(locations_page, 'html.parser')
 
     locations = []
@@ -66,11 +124,11 @@ def get_locations_accu(locations_url):
     return locations
 
 
-def get_locations_rp5(locations_url):
+def get_locations_rp5(locations_url, refresh=False):
     """ Getting locations from rp5.ua.
     """
 
-    locations_page = get_page_source(locations_url)
+    locations_page = get_page_source(locations_url, refresh=refresh)
     soup = BeautifulSoup(locations_page, 'html.parser')
     base_url = 'http://rp5.ua'
     part_url = ''
@@ -186,39 +244,39 @@ def get_configuration_sinoptik():
     return name, url
 
 
-def configurate_accu():
+def configurate_accu(refresh=False):
     """ Displays the list of locations for the user to select
         from AccuWeather.
     """
 
-    locations = get_locations_accu(ACCU_BROWSE_LOCATIONS)
+    locations = get_locations_accu(ACCU_BROWSE_LOCATIONS, refresh=refresh)
     while locations:
         for index, location in enumerate(locations):
             print(f'{index + 1}. {location[0]}')
         selected_index = int(input('Please select location: '))
         location = locations[selected_index - 1]
-        locations = get_locations_accu(location[1])
+        locations = get_locations_accu(location[1], refresh=refresh)
 
     save_configuration_accu(*location)
 
 
-def configurate_rp5():
+def configurate_rp5(refresh=False):
     """ Displays the list of locations for the user to select
         from RP5.ua.
     """
 
-    locations = get_locations_rp5(RP5_BROWSE_LOCATIONS)
+    locations = get_locations_rp5(RP5_BROWSE_LOCATIONS, refresh=refresh)
     while locations:
         for index, location in enumerate(locations):
             print(f'{index + 1}. {location[0]}')
         selected_index = int(input('Please select location: '))
         location = locations[selected_index - 1]
-        locations = get_locations_rp5(location[1])
+        locations = get_locations_rp5(location[1], refresh=refresh)
 
     save_configuration_rp5(*location)
 
 
-def configurate_sinoptik():
+def configurate_sinoptik(refresh=False):
     """ Asking the user to input the city.
     """
   
@@ -232,7 +290,7 @@ def configurate_sinoptik():
     save_configuration_sinoptik(location, url)
 
 
-def get_weather_info_accu(page_content, tomorrow=False):
+def get_weather_info_accu(page_content, tomorrow=False, refresh=False):
     """ Getting the final result in tuple from site accuweather.
     """
 
@@ -245,7 +303,8 @@ def get_weather_info_accu(page_content, tomorrow=False):
         if current_day_selection:
             current_day_url = current_day_selection.find('a').attrs['href']
             if current_day_url:
-                current_day_page = get_page_source(current_day_url)
+                current_day_page = get_page_source(current_day_url, 
+                                                   refresh=refresh)
                 if current_day_page:
                     current_day = BeautifulSoup(current_day_page,
                                                 'html.parser')
@@ -267,7 +326,8 @@ def get_weather_info_accu(page_content, tomorrow=False):
         if tomorrow_day_selection:
             tomorrow_day_url = tomorrow_day_selection.find('a').attrs['href']
             if tomorrow_day_url:
-                tomorrow_day_page = get_page_source(tomorrow_day_url)
+                tomorrow_day_page = get_page_source(tomorrow_day_url, 
+                                                    refresh=refresh)
                 if tomorrow_day_page:
                     tomorrow_day = BeautifulSoup(tomorrow_day_page,
                                                  'html.parser')
@@ -287,7 +347,7 @@ def get_weather_info_accu(page_content, tomorrow=False):
     return weather_info
 
 
-def get_weather_info_rp5(page_content, tomorrow=False):
+def get_weather_info_rp5(page_content, tomorrow=False, refresh=False):
     """ Getting the final result in tuple from site rp5.
     """
 
@@ -302,7 +362,8 @@ def get_weather_info_rp5(page_content, tomorrow=False):
             part_url = urllib.parse.quote(part_url)
             current_day_url = base_url + part_url
             if current_day_url:
-                current_day_page = get_page_source(current_day_url)
+                current_day_page = get_page_source(current_day_url, 
+                                                   refresh=refresh)
                 if current_day_page:
                     current_day = BeautifulSoup(current_day_page, 
                                                 'html.parser')
@@ -334,7 +395,8 @@ def get_weather_info_rp5(page_content, tomorrow=False):
             base_url = 'http://rp5.ua' 
             tomorrow_day_url = base_url + part_url
             if tomorrow_day_url:
-                tomorrow_day_page = get_page_source(tomorrow_day_url)
+                tomorrow_day_page = get_page_source(tomorrow_day_url, 
+                                                    refresh=refresh)
                 if tomorrow_day_page:
                     tomorrow_day = BeautifulSoup(tomorrow_day_page, 
                                                  'html.parser')
@@ -358,7 +420,7 @@ def get_weather_info_rp5(page_content, tomorrow=False):
     return weather_info
 
 
-def get_weather_info_sinoptik(page_content, tomorrow=False):
+def get_weather_info_sinoptik(page_content, tomorrow=False, refresh=False):
     """ Getting the final result in tuple from sinoptik.ua site.
     """
 
@@ -407,66 +469,68 @@ def produse_output(city_name, info):
         print(f' {key} : {html.unescape(value)}')
 
 
-def get_accu_weather_info(tomorrow=False, write=False):
+def get_accu_weather_info(tomorrow=False, write=False, refresh=False):
     """ Displays the weather information from AccuWeather site to current or
         tomorrow day, records this informations in a text file if you want.
     """
 
     city_name, city_url = get_configuration_accu()
-    content = get_page_source(city_url)
+    content = get_page_source(city_url, refresh=refresh)
 
     if not tomorrow:
         print("AccuWeather today: \n" + '-'*20)
     else:
         print("AccuWeather tomorrow: \n" + '-'*20)
     produse_output(city_name, get_weather_info_accu(content, 
-                                                    tomorrow=tomorrow))
-    if write==True:
+                                        tomorrow=tomorrow, refresh=refresh))
+    if write:
         with open('weatherapp.txt', 'w') as f:
             f.write('AccuWeather tomorrow: ' + str(
-                    get_weather_info_accu(content, tomorrow=tomorrow)))
+                            get_weather_info_accu(content, tomorrow=tomorrow, 
+                                                  refresh=refresh)))
     
 
-def get_rp5_weather_info(tomorrow=False, write=False):
+def get_rp5_weather_info(tomorrow=False, write=False, refresh=False):
     """ Displays the weather information from RP5.ua site to current or
         tomorrow day, records this informations in a text file if you want.
     """
 
     city_name, city_url = get_configuration_rp5()
-    content = get_page_source(city_url)
+    content = get_page_source(city_url, refresh=refresh)
 
     if not tomorrow:
         print("RP5 today: \n" + '-'*20)
     else:
         print("RP5 tomorrow: \n" + '-'*20)
     produse_output(city_name, get_weather_info_rp5(content, 
-                                                       tomorrow=tomorrow))
+                                        tomorrow=tomorrow, refresh=refresh))
 
-    if write==True:
+    if write:
         with open('weatherapp.txt', 'w') as f:
             f.write('RP5 tomorrow: ' + str(
-                            get_weather_info_rp5(content, tomorrow=tomorrow)))
+                            get_weather_info_rp5(content, tomorrow=tomorrow, 
+                            refresh=refresh)))
 
 
-def get_sinoptik_weather_info(tomorrow=False, write=False):
+def get_sinoptik_weather_info(tomorrow=False, write=False, refresh=False):
     """ Displays the weather information from sinoptik site to current or
         tomorrow day, records this informations in a text file if you want.
     """
 
     city_name, city_url = get_configuration_sinoptik()
-    content = get_page_source(city_url)
+    content = get_page_source(city_url, refresh=refresh)
 
     if not tomorrow:
         print("SINOPTIK.UA today: \n" + '-'*20)
     else:
         print("SINOPTIK.UA tomorrow: \n" + '-'*20)
     produse_output(city_name, get_weather_info_sinoptik(content, 
-                                                       tomorrow=tomorrow))
-    if write==True:
+                                        tomorrow=tomorrow, refresh=refresh))
+    if write:
         with open('weatherapp.txt', 'w') as f:
             f.write('SINOPTIK.UA: ' + str(
                                         get_weather_info_sinoptik(content, 
-                                        tomorrow=tomorrow)))
+                                        tomorrow=tomorrow, refresh=refresh)))
 
 
 def main(argv):
@@ -488,15 +552,18 @@ def main(argv):
     parser.add_argument('--write_file', 
                         help='write the weather info to the text file', 
                         action = 'store_true')
+    parser.add_argument('--refresh', help='Update caches', 
+                        action = 'store_true')
     params = parser.parse_args(argv)
 
     if params.command:
         command = params.command[0]
         if command in KNOWN_COMMANDS:
             KNOWN_COMMANDS[command](tomorrow=params.tomorrow, 
-                                    write=params.write_file) 
+                                    write=params.write_file,
+                                    refresh=params.refresh) 
         elif command in CONFIG_COMANDS:
-            CONFIG_COMANDS[command]()
+            CONFIG_COMANDS[command](refresh=params.refresh)
         else:
             print("Unknown command provided!")
             sys.exit(1)
