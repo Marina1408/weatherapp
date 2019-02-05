@@ -4,6 +4,7 @@
 """
 
 import sys
+import os
 import html
 import time
 import hashlib
@@ -13,6 +14,7 @@ import urllib.parse
 from pathlib import Path
 from bs4 import BeautifulSoup
 from urllib.request import urlopen, Request
+from shutil import rmtree
 
 
 ACCU_URL = ('https://www.accuweather.com/uk/ua/rivne/325590/'
@@ -36,7 +38,7 @@ CONFIG_FILE_RP5 = 'rp5_weatherapp.ini'
 CONFIG_FILE_SINOPTIK = 'sinoptik_weatherapp.ini'
 CONFIG_FOLDER = 'weatherapp_ini'
 
-CACHE_DIR = '.wappcache '
+CACHE_DIR = '.wappcache'
 CACH_TIME = 300
 
 
@@ -244,50 +246,79 @@ def get_configuration_sinoptik():
     return name, url
 
 
-def configurate_accu(refresh=False):
+def clear_configurate_accu():
+    """ Clear configurate file for AccuWeather site.
+    """
+
+    os.remove(get_configuration_file_accu())
+
+
+def clear_configurate_rp5():
+    """ Clear configurate file for RP5.ua site.
+    """
+
+    os.remove(get_configuration_file_rp5())
+
+
+def clear_configurate_sinoptik():
+    """ Clear configurate file for sinoptik.ua site.
+    """
+
+    os.remove(get_configuration_file_sinoptik())
+
+
+def configurate_accu(refresh=False, r_defaults=False):
     """ Displays the list of locations for the user to select
         from AccuWeather.
     """
 
-    locations = get_locations_accu(ACCU_BROWSE_LOCATIONS, refresh=refresh)
-    while locations:
-        for index, location in enumerate(locations):
-            print(f'{index + 1}. {location[0]}')
-        selected_index = int(input('Please select location: '))
-        location = locations[selected_index - 1]
-        locations = get_locations_accu(location[1], refresh=refresh)
+    if not r_defaults:
+        locations = get_locations_accu(ACCU_BROWSE_LOCATIONS, refresh=refresh)
+        while locations:
+            for index, location in enumerate(locations):
+                print(f'{index + 1}. {location[0]}')
+            selected_index = int(input('Please select location: '))
+            location = locations[selected_index - 1]
+            locations = get_locations_accu(location[1], refresh=refresh)
 
-    save_configuration_accu(*location)
+        save_configuration_accu(*location)
+    else:
+        clear_configurate_accu()
 
 
-def configurate_rp5(refresh=False):
+def configurate_rp5(refresh=False, r_defaults=False):
     """ Displays the list of locations for the user to select
         from RP5.ua.
     """
 
-    locations = get_locations_rp5(RP5_BROWSE_LOCATIONS, refresh=refresh)
-    while locations:
-        for index, location in enumerate(locations):
-            print(f'{index + 1}. {location[0]}')
-        selected_index = int(input('Please select location: '))
-        location = locations[selected_index - 1]
-        locations = get_locations_rp5(location[1], refresh=refresh)
+    if not r_defaults:
+        locations = get_locations_rp5(RP5_BROWSE_LOCATIONS, refresh=refresh)
+        while locations:
+            for index, location in enumerate(locations):
+                print(f'{index + 1}. {location[0]}')
+            selected_index = int(input('Please select location: '))
+            location = locations[selected_index - 1]
+            locations = get_locations_rp5(location[1], refresh=refresh)
 
-    save_configuration_rp5(*location)
+        save_configuration_rp5(*location)
+    else:
+        clear_configurate_rp5()
 
 
-def configurate_sinoptik(refresh=False):
+def configurate_sinoptik(refresh=False, r_defaults=False):
     """ Asking the user to input the city.
     """
-  
-    base_url = 'https://ua.sinoptik.ua'
-    part_1_url = '/погода-'
-    part_1_url = urllib.parse.quote(part_1_url)
-    location = input('Введіть назву міста: \n')
-    part_2_url = urllib.parse.quote(location)
-    url = base_url + part_1_url + part_2_url
 
-    save_configuration_sinoptik(location, url)
+    if not r_defaults:
+        base_url = 'https://ua.sinoptik.ua'
+        part_1_url = '/погода-'
+        part_1_url = urllib.parse.quote(part_1_url)
+        location = input('Введіть назву міста: \n')
+        part_2_url = urllib.parse.quote(location)
+        url = base_url + part_1_url + part_2_url
+        save_configuration_sinoptik(location, url)
+    else:
+        clear_configurate_sinoptik()
 
 
 def get_weather_info_accu(page_content, tomorrow=False, refresh=False):
@@ -322,7 +353,7 @@ def get_weather_info_accu(page_content, tomorrow=False, refresh=False):
                         weather_info['feal_temp'] = feal_temp.text
     else:
         tomorrow_day_selection = city_page.find('li',
-                                                class_='day hv cl')
+                                                class_='day last hv cl')
         if tomorrow_day_selection:
             tomorrow_day_url = tomorrow_day_selection.find('a').attrs['href']
             if tomorrow_day_url:
@@ -354,68 +385,36 @@ def get_weather_info_rp5(page_content, tomorrow=False, refresh=False):
     city_page = BeautifulSoup(page_content, 'html.parser')
     weather_info = {}
     if not tomorrow:
-        current_day_selection = city_page.find('div',
-                                               class_='forprint-about')
-        if current_day_selection:
-            part_url = current_day_selection.findPrevious('a').attrs['href']
-            base_url = 'http://rp5.ua' 
-            part_url = urllib.parse.quote(part_url)
-            current_day_url = base_url + part_url
-            if current_day_url:
-                current_day_page = get_page_source(current_day_url, 
-                                                   refresh=refresh)
-                if current_day_page:
-                    current_day = BeautifulSoup(current_day_page, 
-                                                'html.parser')
-                    weather_details = \
-                        current_day.find('div', attrs={'id': 'archiveString'})
-                    weather_details_cond = \
-                        weather_details.find('div', class_='ArchiveInfo')
-                    conditions = weather_details.get_text()
-                    condition = str(conditions[conditions.find('F,')+3:])
-                    if condition:
-                        weather_info['cond'] = condition
-                    weather_details_temp = weather_details.find('div',
-                                                       class_='ArchiveTemp')
-                    temp = weather_details_temp.find('span', class_='t_0')
-                    if temp:
-                        weather_info['temp'] = temp.text
-                    weather_details_feal_temp = weather_details.find('div',
+        weather_details = city_page.find('div', attrs={'id': 'archiveString'})
+        weather_details_cond = \
+                             weather_details.find('div', class_='ArchiveInfo')
+        conditions = weather_details.get_text()
+        condition = str(conditions[conditions.find('F,')+3:])
+        if condition:
+            weather_info['cond'] = condition
+        weather_details_temp = weather_details.find('div',
+                                                    class_='ArchiveTemp')
+        temp = weather_details_temp.find('span', class_='t_0')
+        if temp:
+            weather_info['temp'] = temp.text
+        weather_details_feal_temp = weather_details.find('div',
                                                 class_='ArchiveTempFeeling')
-                    feal_temp = weather_details_feal_temp.find('span',
-                                                           class_='t_0')
-                    if feal_temp:
-                        weather_info['feal_temp'] = feal_temp.text
+        feal_temp = weather_details_feal_temp.find('span', class_='t_0')
+        if feal_temp:
+            weather_info['feal_temp'] = feal_temp.text
     else:
-        tomorrow_day_selection = city_page.find('div',
-                                               class_='forprint-about')
-        if tomorrow_day_selection:
-            part_url = tomorrow_day_selection.findPrevious('a').attrs['href']
-            part_url = urllib.parse.quote(part_url)
-            base_url = 'http://rp5.ua' 
-            tomorrow_day_url = base_url + part_url
-            if tomorrow_day_url:
-                tomorrow_day_page = get_page_source(tomorrow_day_url, 
-                                                    refresh=refresh)
-                if tomorrow_day_page:
-                    tomorrow_day = BeautifulSoup(tomorrow_day_page, 
-                                                 'html.parser')
-                    weather_details = \
-                        tomorrow_day.find('div', attrs={'id': 
-                                                'forecastShort-content'})
-                    weather_details_tomorrow = weather_details.find(
-                                                'span', class_='second-part')
-                    conditions = \
-                            weather_details_tomorrow.findPrevious('b').text
-                    condition_all = str(conditions[conditions.find(
-                                                             'Завтра:')+28:])
-                    condition = str(condition_all[condition_all.find(
-                                                                   'F,')+3:])
-                    if condition:
-                        weather_info['cond'] = condition
-                    temp = weather_details_tomorrow.find('span', class_='t_0')
-                    if temp:
-                        weather_info['temp'] = temp.text
+        weather_details = city_page.find('div', attrs={'id': 
+                                                   'forecastShort-content'})
+        weather_details_tomorrow = weather_details.find('span',
+                                                        class_='second-part')
+        conditions = weather_details_tomorrow.findPrevious('b').text
+        condition_all = str(conditions[conditions.find('Завтра:')+28:])
+        condition = str(condition_all[condition_all.find('F,')+3:])
+        if condition:
+            weather_info['cond'] = condition
+        temp = weather_details_tomorrow.find('span', class_='t_0')
+        if temp:
+            weather_info['temp'] = temp.text
                         
     return weather_info
 
@@ -445,16 +444,31 @@ def get_weather_info_sinoptik(page_content, tomorrow=False, refresh=False):
             weather_info['feal_temp'] = feal_temp.text
     else:
         weather_details = city_page.find('div', attrs={'id': 'bd2'})
-        condition = weather_details.find(
-                    'div', class_='weatherIco d300')
-        if condition:
-            weather_info['cond'] = condition.text
         temp = weather_details.find('div', class_='max')
         if temp:
             weather_info['temp'] = temp.text
         feal_temp = weather_details.find('div', class_='min')
         if feal_temp:
             weather_info['feal_temp'] = feal_temp.text
+        tomorrow_day_selection = city_page.find('div',
+                                             attrs={'id': 'bd2'})
+        if tomorrow_day_selection:
+            part_url = tomorrow_day_selection.find('a').attrs['href']
+            part_url = urllib.parse.quote(part_url)
+            base_url = 'http:' 
+            tomorrow_day_url = base_url + part_url
+            if tomorrow_day_url:
+                tomorrow_day_page = get_page_source(tomorrow_day_url, 
+                                                    refresh=refresh)
+                if tomorrow_day_page:
+                    tomorrow_day = BeautifulSoup(tomorrow_day_page,
+                                                 'html.parser')
+                    weather_details = tomorrow_day.find('div',
+                                             class_='wDescription clearfix')
+                    condition = weather_details.find('div', 
+                                                     class_='description')
+                    if condition:
+                        weather_info['cond'] = condition.text
 
     return weather_info
 
@@ -533,6 +547,25 @@ def get_sinoptik_weather_info(tomorrow=False, write=False, refresh=False):
                                         tomorrow=tomorrow, refresh=refresh)))
 
 
+def clear_all_cache():
+    """ Clear all cache files and the cache directory.
+    """
+
+    cache_dir = get_cache_directory()
+    rmtree(cache_dir)
+
+
+def clear_not_valid_cache():
+    """ Clear all not valid cache.
+    """
+
+    cache_dir = get_cache_directory()
+    if cache_dir.exists():
+        for file in os.listdir(cache_dir):
+            if not is_valid(cache_dir/file):
+                os.remove(cache_dir/file)
+                           
+
 def main(argv):
     """ Main entry point.
     """
@@ -545,14 +578,25 @@ def main(argv):
                        configurate_rp5, 'config_sinoptik': 
                        configurate_sinoptik}
 
+    CACHE_COMMANDS = {'clear-cache' : clear_all_cache}
+
+
+    clear_not_valid_cache()
+      
     parser = argparse.ArgumentParser()
     parser.add_argument('command', help='Service name', nargs=1)
-    parser.add_argument('--tomorrow', help='weather for tomorrow day', 
+    parser.add_argument('--tomorrow', help='Weather for tomorrow day', 
                         action = 'store_true')
     parser.add_argument('--write_file', 
-                        help='write the weather info to the text file', 
+                        help='Write the weather info to the text file', 
                         action = 'store_true')
     parser.add_argument('--refresh', help='Update caches', 
+                        action = 'store_true')
+    parser.add_argument('clear-cache', 
+                        help='Clear all cache with cache directory', 
+                        nargs='?')
+    parser.add_argument('--reset_defaults', 
+                        help='Clear configurate locations', 
                         action = 'store_true')
     params = parser.parse_args(argv)
 
@@ -563,7 +607,10 @@ def main(argv):
                                     write=params.write_file,
                                     refresh=params.refresh) 
         elif command in CONFIG_COMANDS:
-            CONFIG_COMANDS[command](refresh=params.refresh)
+            CONFIG_COMANDS[command](refresh=params.refresh, 
+                                    r_defaults=params.reset_defaults)
+        elif command in CACHE_COMMANDS:
+            CACHE_COMMANDS[command]()
         else:
             print("Unknown command provided!")
             sys.exit(1)
