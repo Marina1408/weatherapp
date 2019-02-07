@@ -4,6 +4,7 @@
 """
 
 import sys
+import re
 import os
 import html
 import time
@@ -40,6 +41,8 @@ CONFIG_FOLDER = 'weatherapp_ini'
 
 CACHE_DIR = '.wappcache'
 CACH_TIME = 300
+
+base_url_rp5 = 'http://rp5.ua'
 
 
 def get_request_headers():
@@ -132,21 +135,20 @@ def get_locations_rp5(locations_url, refresh=False):
 
     locations_page = get_page_source(locations_url, refresh=refresh)
     soup = BeautifulSoup(locations_page, 'html.parser')
-    base_url = 'http://rp5.ua'
     part_url = ''
 
     locations = []
     for location in soup.find_all('div', class_='country_map_links'):
         part_url = location.find('a').attrs['href']
         part_url = urllib.parse.quote(part_url)
-        url = base_url + part_url
+        url = base_url_rp5 + part_url
         location = location.find('a').text
         locations.append((location, url))
     if locations == []:
         for location in soup.find_all('h3'):
             part_url = location.find('a').attrs['href']
             part_url = urllib.parse.quote(part_url)
-            url = base_url + '/' + part_url
+            url = base_url_rp5 + '/' + part_url
             location = location.find('a').text
             locations.append((location, url))
               
@@ -329,8 +331,7 @@ def get_weather_info_accu(page_content, tomorrow=False, refresh=False):
     weather_info = {}
     if not tomorrow:
         current_day_selection = city_page.find\
-                      ('li', class_='day current first cl') or city_page.find\
-                      ('li', class_='night current first cl')
+                 ('li', class_=re.compile('(day|night) current first cl'))         
         if current_day_selection:
             current_day_url = current_day_selection.find('a').attrs['href']
             if current_day_url:
@@ -437,9 +438,11 @@ def get_weather_info_sinoptik(page_content, tomorrow=False, refresh=False):
         temp = weather_details.find('p', class_='today-temp')
         if temp:
             weather_info['temp'] = temp.text
-            weather_details_feal_temp = weather_details.find('tr',
+        weather_details_feal_temp = weather_details.find('tr',
                                         class_='temperatureSens')
-        feal_temp = weather_details_feal_temp.find('td', class_='p5 cur')
+        feal_temp = weather_details_feal_temp.find('td', class_=re.compile(
+                          '(p5 cur)|(p1)|(p2 bR)|(p3)|(p4 bR)|(p5)|(p6 bR)|'
+                          '(p7 cur)|(p8)'))
         if feal_temp:
             weather_info['feal_temp'] = feal_temp.text
     else:
@@ -469,7 +472,7 @@ def get_weather_info_sinoptik(page_content, tomorrow=False, refresh=False):
                                                      class_='description')
                     if condition:
                         weather_info['cond'] = condition.text
-
+        
     return weather_info
 
 
