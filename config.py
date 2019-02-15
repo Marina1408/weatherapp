@@ -5,6 +5,9 @@ CONFIG_FILE_ACCU = 'accu_weatherapp.ini'
 CONFIG_FILE_RP5 = 'rp5_weatherapp.ini'
 CONFIG_FILE_SINOPTIK = 'sinoptik_weatherapp.ini'
 
+# Write to text file
+WRITE_FILE = 'weatherapp.txt'
+
 # Cache settings
 CACHE_DIR = '.wappcache'       #cache directory name
 CACH_TIME = 300                # how long cache files are valid(in seconds)

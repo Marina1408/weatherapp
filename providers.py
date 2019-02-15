@@ -87,8 +87,32 @@ class WeatherProvider:
 
 	    return page_source.decode('utf-8')
 
+	def get_configuration(self):
+		""" Returns configurated location name and url
+		"""
 
-	def run(self, write=False):
+		name = self.default_location
+		url = self.default_url
+		parser = configparser.ConfigParser(interpolation=None)
+		parser.read(self.get_configuration_file())
+
+		if config.CONFIG_LOCATION in parser.sections():
+			location_config = parser[config.CONFIG_LOCATION]
+			name, url = location_config['name'], location_config['url']
+
+		return name, url
+
+	def save_configuration_accu(self, name, url):
+	    """ Save selected location to configuration file.
+	    """
+
+	    parser = configparser.ConfigParser(interpolation=None)
+	    parser[config.CONFIG_LOCATION] = {'name': name, 'url': url}
+	    with open(self.get_configuration_file(), 'w', 
+	              encoding='utf-8') as configfile:
+	        parser.write(configfile)
+
+	def run(self):
 		""" Run provider.
 		"""
 
@@ -102,6 +126,16 @@ class WeatherProvider:
 	    cache_dir = self.get_cache_directory()
 	    rmtree(cache_dir)
 
+	def clear_not_valid_cache(self):
+	    """ Clear all not valid cache.
+	    """
+
+	    cache_dir = self.get_cache_directory()
+	    if cache_dir.exists():
+	    	for file in os.listdir(cache_dir):
+	    		if not self.is_valid(cache_dir/file):
+	    			os.remove(cache_dir/file)
+
 
 class AccuWeatherProvider(WeatherProvider):
 
@@ -114,37 +148,11 @@ class AccuWeatherProvider(WeatherProvider):
 	default_location = config.DEFAULT_ACCU_LOCATION_NAME
 	default_url = config.DEFAULT_ACCU_LOCATION_URL
 
-
-	def get_configuration_file_accu(self):
+	def get_configuration_file(self):
 	    """ Path to configuration file.
 	    """
 
 	    return Path.home() / config.CONFIG_FOLDER / config.CONFIG_FILE_ACCU
-
-	def get_configuration(self):
-		""" Returns configurated location name and url
-		"""
-
-		name = self.default_location
-		url = self.default_url
-		parser = configparser.ConfigParser()
-		parser.read(self.get_configuration_file_accu())
-
-		if config.CONFIG_LOCATION in parser.sections():
-			location_config = parser[config.CONFIG_LOCATION]
-			name, url = location_config['name'], location_config['url']
-
-		return name, url
-
-	def save_configuration_accu(self, name, url):
-	    """ Save selected location in AccuWeather site to configuration file.
-	    """
-
-	    parser = configparser.ConfigParser()
-	    parser[config.CONFIG_LOCATION] = {'name': name, 'url': url}
-	    with open(self.get_configuration_file_accu(), 'w', 
-	              encoding='utf-8') as configfile:
-	        parser.write(configfile)
 
 	def get_locations_accu(self, locations_url):
 	    """ Getting locations from accuweather.
@@ -181,7 +189,7 @@ class AccuWeatherProvider(WeatherProvider):
 	    """ Clear configurate file for AccuWeather site.
 	    """
 
-	    os.remove(self.get_configuration_file_accu())
+	    os.remove(self.get_configuration_file())
 
 	def get_weather_info(self, page_content):
 	    """ Getting the final result in tuple from site accuweather.
@@ -253,36 +261,11 @@ class Rp5WeatherProvider(WeatherProvider):
 	default_location = config.DEFAULT_RP5_LOCATION_NAME
 	default_url = config.DEFAULT_RP5_LOCATION_URL
 
-	
-	def get_configuration_file_rp5(self):
+	def get_configuration_file(self):
 	    """ Path to configuration file.\
 	    """
 
 	    return Path.home() / config.CONFIG_FOLDER / config.CONFIG_FILE_RP5
-
-	def get_configuration(self):
-	    """ Returns configurated location name and url
-	    """
-
-	    name = self.default_location
-	    url = self.default_url
-	    parser = configparser.ConfigParser(interpolation=None)
-	    parser.read(self.get_configuration_file_rp5(), encoding='utf-8')
-
-	    if config.CONFIG_LOCATION in parser.sections():
-	    	location_config = parser[config.CONFIG_LOCATION]
-	    	name, url = location_config['name'], location_config['url']
-	    return name, url
-
-	def save_configuration_rp5(self, name, url):
-	    """ Save selected location in RP5.ua site to configuration file.
-	    """
-
-	    parser = configparser.ConfigParser(interpolation=None)
-	    parser[config.CONFIG_LOCATION] = {'name': name, 'url': url}
-	    with open(self.get_configuration_file_rp5(), 'w', 
-                  encoding='utf-8') as configfile:
-	        parser.write(configfile)
 
 	def get_locations_rp5(self, locations_url):
 	    """ Getting locations from rp5.ua.
@@ -330,7 +313,7 @@ class Rp5WeatherProvider(WeatherProvider):
 	    """ Clear configurate file for RP5.ua site.
 	    """
 
-	    os.remove(self.get_configuration_file_rp5())
+	    os.remove(self.get_configuration_file())
 
 	def get_weather_info(self, page_content):
 	    """ Getting the final result in tuple from site rp5.
@@ -385,39 +368,12 @@ class SinoptikWeatherProvider(WeatherProvider):
 	default_location = config.DEFAULT_SINOPTIK_LOCATION_NAME
 	default_url = config.DEFAULT_SINOPTIK_LOCATION_URL
 
-
-	def get_configuration(self):
-	    """ Returns configurated location name and url
-	    """
-
-	    name = self.default_location
-	    url = self.default_url
-	    parser = configparser.ConfigParser(interpolation=None)
-	    parser.read(self.get_configuration_file_sinoptik())
-
-	    if config.CONFIG_LOCATION in parser.sections():
-	    	location_config = parser[config.CONFIG_LOCATION]
-	    	name, url = location_config['name'], location_config['url']
-
-	    return name, url
-
-	def get_configuration_file_sinoptik(self):
+	def get_configuration_file(self):
 	    """ Path to configuration file.
 	    """
 
 	    return (Path.home() / config.CONFIG_FOLDER /
 	                          config.CONFIG_FILE_SINOPTIK)
-
-	def save_configuration_sinoptik(self, name, url):
-	    """ Save selected location in Sinoptik.ua site to configuration file.
-	    """
-
-	    parser = configparser.ConfigParser(interpolation=None)
-	    parser[config.CONFIG_LOCATION] = {'name': name, 'url': url}
-	    with open(self.get_configuration_file_sinoptik(), 'w', 
-                                    encoding='utf-8') as configfile:
-	        parser.write(configfile)
-
 
 	def configurate_sinoptik(self, r_defaults=False):
 	    """ Asking the user to input the city.
@@ -438,7 +394,7 @@ class SinoptikWeatherProvider(WeatherProvider):
 	    """ Clear configurate file for sinoptik.ua site.
 	    """
 
-	    os.remove(self.get_configuration_file_sinoptik())
+	    os.remove(self.get_configuration_file())
 
 	def get_weather_info(self, page_content):
 	    """ Getting the final result in tuple from sinoptik.ua site.

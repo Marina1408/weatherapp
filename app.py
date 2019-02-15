@@ -8,6 +8,7 @@ import html
 from argparse import ArgumentParser
 
 from providermanager import ProviderManager
+import config
 
 class App:
 
@@ -49,10 +50,19 @@ class App:
 	    print("*"*10, end='\n\n')
 
 	    print(f'{location}')
+	    if self.options.tomorrow:
+	    	print('Tomorrow:')
 	    print('-'*20)
 	    for key, value in info.items():
 	    	print(f' {key} : {html.unescape(value)}')
 	    	print("="*40, end='\n\n')
+
+	def write_file(self, title, location, info):
+		""" Write the weather data to text file.
+		"""
+
+		with open(config.WRITE_FILE, 'w') as f:
+			f.write(str(self.produse_output(title, location, info)))
 
 	def run(self, argv):
 	    """ Run aplication.
@@ -70,16 +80,16 @@ class App:
 	    			                provider_obj.location, 
 	    			                provider_obj.run())
 	    elif command_name in self.providermanager:
-		    provider = self.providermanager[command_name]
-		    provider_obj = provider(self)
-		    self.produse_output(provider_obj.title,
-    	 	 	            provider_obj.location,
-    	 	 	            provider_obj.run())
-    	
+	    	provider = self.providermanager[command_name]
+	    	provider_obj = provider(self)
+	    	self.produse_output(provider_obj.title, 
+	    		                provider_obj.location, 
+	    		                provider_obj.run())
 
 def main(argv=sys.argv[1:]):
 	""" Main entry point.
 	"""
+	
 	return App().run(argv)
 
 
