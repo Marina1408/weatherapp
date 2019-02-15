@@ -15,14 +15,6 @@ from providers import Rp5WeatherProvider
 from providers import SinoptikWeatherProvider
 
 
-def produse_output(city_name, info):
-    """ Displays the final result of the program
-    """
-
-    print(f'{city_name}')
-    print('-'*20)
-    for key, value in info.items():
-        print(f' {key} : {html.unescape(value)}')
 
 
 def get_accu_weather_info(tomorrow=False, write=False, refresh=False):

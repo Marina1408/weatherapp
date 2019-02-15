@@ -7,54 +7,23 @@ import html
 import urllib.parse
 from pathlib import Path
 from urllib.request import urlopen, Request
+from shutil import rmtree
 
 from bs4 import BeautifulSoup
 
 import config
 
 
-class AccuWeatherProvider:
-
-	""" Weather provider for AccuWeather site.
+class WeatherProvider:
+	""" Base weather provider.
 	"""
 
-	def __init__(self):
-		self.name = config.ACCU_PROVIDER_NAME
+	def __init__(self, app):
+		self.app = app
 
-		location, url = self.get_configuration_accu()
+		location, url = self.get_configuration()
 		self.location = location
 		self.url = url
-
-	def get_configuration_file_accu(self):
-	    """ Path to configuration file.
-	    """
-
-	    return Path.home() / config.CONFIG_FOLDER / config.CONFIG_FILE_ACCU
-
-	def get_configuration_accu(self):
-		""" Returns configurated location name and url
-		"""
-
-		name = config.DEFAULT_NAME
-		url = config.DEFAULT_URL_ACCU
-		parser = configparser.ConfigParser()
-		parser.read(self.get_configuration_file_accu())
-
-		if config.CONFIG_LOCATION in parser.sections():
-			location_config = parser[config.CONFIG_LOCATION]
-			name, url = location_config['name'], location_config['url']
-
-		return name, url
-
-	def save_configuration_accu(self, name, url):
-	    """ Save selected location in AccuWeather site to configuration file.
-	    """
-
-	    parser = configparser.ConfigParser()
-	    parser[config.CONFIG_LOCATION] = {'name': name, 'url': url}
-	    with open(self.get_configuration_file_accu(), 'w', 
-	              encoding='utf-8') as configfile:
-	        parser.write(configfile)
 
 	def get_request_headers(self):
 	    """Getting headers of the request.
@@ -104,12 +73,12 @@ class AccuWeatherProvider:
 
 	    	return cache
 
-	def get_page_source(self, url, refresh=False):
+	def get_page_source(self, url):
 	    """ Getting page from server.
 	    """
 
 	    cache = self.get_cache(url)
-	    if cache and not refresh:
+	    if cache and not self.app.options.refresh:
 	    	page_source = cache
 	    else:
 	    	request = Request(url, headers=self.get_request_headers())
@@ -118,11 +87,70 @@ class AccuWeatherProvider:
 
 	    return page_source.decode('utf-8')
 
-	def get_locations_accu(self, locations_url, refresh=False):
+
+	def run(self, write=False):
+		""" Run provider.
+		"""
+
+		content = self.get_page_source(self.url)
+		return self.get_weather_info(content)
+
+	def clear_all_cache(self):
+	    """ Clear all cache files and the cache directory.
+	    """
+
+	    cache_dir = self.get_cache_directory()
+	    rmtree(cache_dir)
+
+
+class AccuWeatherProvider(WeatherProvider):
+
+	""" Weather provider for AccuWeather site.
+	"""
+
+	name = config.ACCU_PROVIDER_NAME
+	title = config.ACCU_PROVIDER_TITLE
+
+	default_location = config.DEFAULT_ACCU_LOCATION_NAME
+	default_url = config.DEFAULT_ACCU_LOCATION_URL
+
+
+	def get_configuration_file_accu(self):
+	    """ Path to configuration file.
+	    """
+
+	    return Path.home() / config.CONFIG_FOLDER / config.CONFIG_FILE_ACCU
+
+	def get_configuration(self):
+		""" Returns configurated location name and url
+		"""
+
+		name = self.default_location
+		url = self.default_url
+		parser = configparser.ConfigParser()
+		parser.read(self.get_configuration_file_accu())
+
+		if config.CONFIG_LOCATION in parser.sections():
+			location_config = parser[config.CONFIG_LOCATION]
+			name, url = location_config['name'], location_config['url']
+
+		return name, url
+
+	def save_configuration_accu(self, name, url):
+	    """ Save selected location in AccuWeather site to configuration file.
+	    """
+
+	    parser = configparser.ConfigParser()
+	    parser[config.CONFIG_LOCATION] = {'name': name, 'url': url}
+	    with open(self.get_configuration_file_accu(), 'w', 
+	              encoding='utf-8') as configfile:
+	        parser.write(configfile)
+
+	def get_locations_accu(self, locations_url):
 	    """ Getting locations from accuweather.
 	    """
 
-	    locations_page = self.get_page_source(locations_url, refresh=refresh)
+	    locations_page = self.get_page_source(locations_url)
 	    soup = BeautifulSoup(locations_page, 'html.parser')
 
 	    locations = []
@@ -132,21 +160,19 @@ class AccuWeatherProvider:
 	    	locations.append((location, url))
 	    return locations
 
-	def configurate_accu(self, refresh=False, r_defaults=False):
+	def configurate_accu(self, r_defaults=False):
 	    """ Displays the list of locations for the user to select from 
 	        AccuWeather.
 	    """
 
 	    if not r_defaults:
-	    	locations = self.get_locations_accu(config.ACCU_BROWSE_LOCATIONS, 
-	    		                                refresh=refresh)
+	    	locations = self.get_locations_accu(config.ACCU_BROWSE_LOCATIONS)
 	    	while locations:
 	    		for index, location in enumerate(locations):
 	    			print(f'{index + 1}. {location[0]}')
 	    		selected_index = int(input('Please select location: '))
 	    		location = locations[selected_index - 1]
-	    		locations = self.get_locations_accu(location[1], 
-	    			                                refresh=refresh)
+	    		locations = self.get_locations_accu(location[1])
 	    	self.save_configuration_accu(*location)
 	    else:
 	    	self.clear_configurate_accu()
@@ -157,22 +183,20 @@ class AccuWeatherProvider:
 
 	    os.remove(self.get_configuration_file_accu())
 
-	def get_weather_info_accu(self, page_content, tomorrow=False, 
-		                                          refresh=False):
+	def get_weather_info(self, page_content):
 	    """ Getting the final result in tuple from site accuweather.
 	    """
 
 	    city_page = BeautifulSoup(page_content, 'html.parser')
 	    weather_info = {}
-	    if not tomorrow:
+	    if not self.app.options.tomorrow:
 	    	current_day_selection = city_page.find\
 	    	         ('li', class_=re.compile('(day|night) current first cl'))
 	    	if current_day_selection:
 	    		current_day_url = \
 	    		                current_day_selection.find('a').attrs['href']
 	    		if current_day_url:
-	    			current_day_page = self.get_page_source(current_day_url, 
-                                                       refresh=refresh)
+	    			current_day_page = self.get_page_source(current_day_url)
 	    			if current_day_page:
 	    				current_day = BeautifulSoup(current_day_page,
                                                     'html.parser')
@@ -197,8 +221,7 @@ class AccuWeatherProvider:
 	    		tomorrow_day_url = \
 	    		                tomorrow_day_selection.find('a').attrs['href']
 	    		if tomorrow_day_url:
-	    			tomorrow_day_page = self.get_page_source(tomorrow_day_url, 
-                                                             refresh=refresh)
+	    			tomorrow_day_page = self.get_page_source(tomorrow_day_url)
 	    			if tomorrow_day_page:
 	    				tomorrow_day = BeautifulSoup(tomorrow_day_page,
                                                      'html.parser')
@@ -206,7 +229,7 @@ class AccuWeatherProvider:
                                              attrs={'id': 'detail-day-night'})
 	    				condition = weather_details.find('div', class_='cond')
 	    				if condition:
-	    					weather_info['cond'] = condition.text
+	    					weather_info['cond'] = condition.text.strip()
 	    				temp = weather_details.find('span', 
 	    					                         class_='large-temp')
 	    				if temp:
@@ -218,37 +241,31 @@ class AccuWeatherProvider:
 
 	    return weather_info
 
-	def run(self, tomorrow=False, write=False, refresh=False):
 
-	    content = self.get_page_source(self.url, refresh=refresh)
-	    return self.get_weather_info_accu(content, tomorrow=tomorrow, 
-	    	                              refresh=refresh)
-
-
-class Rp5WeatherProvider:
+class Rp5WeatherProvider(WeatherProvider):
 
 	""" Weather provider for RP5 site.
 	"""
 
-	def __init__(self):
-		self.name = config.RP5_PROVIDER_NAME
+	name = config.RP5_PROVIDER_NAME
+	title = config.RP5_PROVIDER_TITLE
 
-		location, url = self.get_configuration_rp5()
-		self.location = location
-		self.url = url
+	default_location = config.DEFAULT_RP5_LOCATION_NAME
+	default_url = config.DEFAULT_RP5_LOCATION_URL
 
+	
 	def get_configuration_file_rp5(self):
 	    """ Path to configuration file.\
 	    """
 
 	    return Path.home() / config.CONFIG_FOLDER / config.CONFIG_FILE_RP5
 
-	def get_configuration_rp5(self):
+	def get_configuration(self):
 	    """ Returns configurated location name and url
 	    """
 
-	    name = config.DEFAULT_NAME
-	    url = config.DEFAULT_URL_RP5
+	    name = self.default_location
+	    url = self.default_url
 	    parser = configparser.ConfigParser(interpolation=None)
 	    parser.read(self.get_configuration_file_rp5(), encoding='utf-8')
 
@@ -267,73 +284,11 @@ class Rp5WeatherProvider:
                   encoding='utf-8') as configfile:
 	        parser.write(configfile)
 
-	def get_request_headers(self):
-	    """Getting headers of the request.
-	    """
-
-	    return {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64;)'}
-
-	def get_url_hash(self, url):
-	    return hashlib.md5(url.encode('utf-8')).hexdigest()
-
-	def get_cache_directory(self):
-	    """ Path to cach directory.
-	    """
-
-	    return Path.home() / config.CACHE_DIR
-
-	def save_cache(self, url, page_source):
-	    """ Save page source data to file.
-	    """
-
-	    url_hash = self.get_url_hash(url)
-	    cache_dir = self.get_cache_directory()
-	    if not cache_dir.exists():
-	    	cache_dir.mkdir(parents=True)
-
-	    with (cache_dir / url_hash).open('wb') as cache_file:
-	    	cache_file.write(page_source)
-
-	def is_valid(self, path):
-	    """ Check if current cache file is valid.
-	    """
-
-	    return (time.time() - path.stat().st_mtime) < config.CACH_TIME
-
-	def get_cache(self, url):
-	    """ Return cache data if any.
-	    """
-
-	    cache = b''
-	    url_hash = self.get_url_hash(url)
-	    cache_dir = self.get_cache_directory()
-	    if cache_dir.exists():
-	    	cache_path = cache_dir / url_hash
-	    	if cache_path.exists() and self.is_valid(cache_path):
-	    		with cache_path.open('rb') as cache_file:
-	    			cache = cache_file.read()
-
-	    	return cache
-
-	def get_page_source(self, url, refresh=False):
-	    """ Getting page from server.
-	    """
-
-	    cache = self.get_cache(url)
-	    if cache and not refresh:
-	    	page_source = cache
-	    else:
-	    	request = Request(url, headers=self.get_request_headers())
-	    	page_source = urlopen(request).read()
-	    	self.save_cache(url, page_source)
-
-	    return page_source.decode('utf-8')
-
-	def get_locations_rp5(self, locations_url, refresh=False):
+	def get_locations_rp5(self, locations_url):
 	    """ Getting locations from rp5.ua.
 	    """
 
-	    locations_page = self.get_page_source(locations_url, refresh=refresh)
+	    locations_page = self.get_page_source(locations_url)
 	    soup = BeautifulSoup(locations_page, 'html.parser')
 	    part_url = ''
 
@@ -354,20 +309,18 @@ class Rp5WeatherProvider:
 
 	    return locations
 
-	def configurate_rp5(self, refresh=False, r_defaults=False):
+	def configurate_rp5(self, r_defaults=False):
 	    """ Displays the list of locations for the user to select from RP5.
 	    """
 
 	    if not r_defaults:
-	    	locations = self.get_locations_rp5(config.RP5_BROWSE_LOCATIONS, 
-	    		                               refresh=refresh)
+	    	locations = self.get_locations_rp5(config.RP5_BROWSE_LOCATIONS)
 	    	while locations:
 	    		for index, location in enumerate(locations):
 	    			print(f'{index + 1}. {location[0]}')
 	    		selected_index = int(input('Please select location: '))
 	    		location = locations[selected_index - 1]
-	    		locations = self.get_locations_rp5(location[1], 
-	    			                               refresh=refresh)
+	    		locations = self.get_locations_rp5(location[1])
 
 	    	self.save_configuration_rp5(*location)
 	    else:
@@ -379,14 +332,13 @@ class Rp5WeatherProvider:
 
 	    os.remove(self.get_configuration_file_rp5())
 
-	def get_weather_info_rp5(self, page_content, tomorrow=False, 
-		                     refresh=False):
+	def get_weather_info(self, page_content):
 	    """ Getting the final result in tuple from site rp5.
 	    """
 
 	    city_page = BeautifulSoup(page_content, 'html.parser')
 	    weather_info = {}
-	    if not tomorrow:
+	    if not self.app.options.tomorrow:
 	    	weather_details = city_page.find('div', 
 	    		                      attrs={'id': 'archiveString'})
 	    	weather_details_cond = weather_details.find('div', 
@@ -421,31 +373,25 @@ class Rp5WeatherProvider:
 
 	    return weather_info
 
-	def run(self, tomorrow=False, write=False, refresh=False):
-	   
-	    content = self.get_page_source(self.url, refresh=refresh)
-	    return self.get_weather_info_rp5(content, tomorrow=tomorrow,
-	    	                             refresh=refresh)
 
-
-class SinoptikWeatherProvider:
+class SinoptikWeatherProvider(WeatherProvider):
 
 	""" Weather provider for Sinoptik.ua site.
 	"""
 
-	def __init__(self):
-		self.name = config.SINOPTIK_PROVIDER_NAME
+	name = config.SINOPTIK_PROVIDER_NAME
+	title = config.SINOPTIK_PROVIDER_TITLE
 
-		location, url = self.get_configuration_sinoptik()
-		self.location = location
-		self.url = url
+	default_location = config.DEFAULT_SINOPTIK_LOCATION_NAME
+	default_url = config.DEFAULT_SINOPTIK_LOCATION_URL
 
-	def get_configuration_sinoptik(self):
+
+	def get_configuration(self):
 	    """ Returns configurated location name and url
 	    """
 
-	    name = config.DEFAULT_NAME
-	    url = config.DEFAULT_URL_SINOPTIK
+	    name = self.default_location
+	    url = self.default_url
 	    parser = configparser.ConfigParser(interpolation=None)
 	    parser.read(self.get_configuration_file_sinoptik())
 
@@ -472,69 +418,8 @@ class SinoptikWeatherProvider:
                                     encoding='utf-8') as configfile:
 	        parser.write(configfile)
 
-	def get_request_headers(self):
-	    """Getting headers of the request.
-	    """
 
-	    return {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64;)'}
-
-	def get_url_hash(self, url):
-	    return hashlib.md5(url.encode('utf-8')).hexdigest()
-
-	def get_cache_directory(self):
-	    """ Path to cach directory.
-	    """
-
-	    return Path.home() / config.CACHE_DIR
-
-	def save_cache(self, url, page_source):
-	    """ Save page source data to file.
-	    """
-
-	    url_hash = self.get_url_hash(url)
-	    cache_dir = self.get_cache_directory()
-	    if not cache_dir.exists():
-	    	cache_dir.mkdir(parents=True)
-
-	    with (cache_dir / url_hash).open('wb') as cache_file:
-	    	cache_file.write(page_source)
-
-	def is_valid(self, path):
-	    """ Check if current cache file is valid.
-	    """
-
-	    return (time.time() - path.stat().st_mtime) < config.CACH_TIME
-
-	def get_cache(self, url):
-	    """ Return cache data if any.
-	    """
-
-	    cache = b''
-	    url_hash = self.get_url_hash(url)
-	    cache_dir = self.get_cache_directory()
-	    if cache_dir.exists():
-	    	cache_path = cache_dir / url_hash
-	    	if cache_path.exists() and self.is_valid(cache_path):
-	    		with cache_path.open('rb') as cache_file:
-	    			cache = cache_file.read()
-
-	    	return cache
-
-	def get_page_source(self, url, refresh=False):
-	    """ Getting page from server.
-	    """
-
-	    cache = self.get_cache(url)
-	    if cache and not refresh:
-	    	page_source = cache
-	    else:
-	    	request = Request(url, headers=self.get_request_headers())
-	    	page_source = urlopen(request).read()
-	    	self.save_cache(url, page_source)
-
-	    return page_source.decode('utf-8')
-
-	def configurate_sinoptik(self, refresh=False, r_defaults=False):
+	def configurate_sinoptik(self, r_defaults=False):
 	    """ Asking the user to input the city.
 	    """
 
@@ -555,15 +440,14 @@ class SinoptikWeatherProvider:
 
 	    os.remove(self.get_configuration_file_sinoptik())
 
-	def get_weather_info_sinoptik(self, page_content, tomorrow=False, 
-		                          refresh=False):
+	def get_weather_info(self, page_content):
 	    """ Getting the final result in tuple from sinoptik.ua site.
 	    """
 
 	    city_page = BeautifulSoup(page_content, 'html.parser')
 	    weather_info = {}
 	    weather_details = city_page.find('div', class_='tabsContent')
-	    if not tomorrow:
+	    if not self.app.options.tomorrow:
 	    	weather_details = city_page.find('div', class_='tabsContent')
 	    	condition_weather_details = weather_details.find('div', 
                                       class_='wDescription clearfix')
@@ -598,8 +482,7 @@ class SinoptikWeatherProvider:
 	    		base_url = 'http:' 
 	    		tomorrow_day_url = base_url + part_url
 	    		if tomorrow_day_url:
-	    			tomorrow_day_page = self.get_page_source(tomorrow_day_url, 
-                                                    refresh=refresh)
+	    			tomorrow_day_page = self.get_page_source(tomorrow_day_url)
 	    			if tomorrow_day_page:
 	    				tomorrow_day = BeautifulSoup(tomorrow_day_page,
                                                  'html.parser')
@@ -612,11 +495,7 @@ class SinoptikWeatherProvider:
 
 	    return weather_info
 
-	def run(self, tomorrow=False, write=False, refresh=False):
-
-		content = self.get_page_source(self.url, refresh=refresh)
-		return self.get_weather_info_sinoptik(content, tomorrow=tomorrow,
-			                                  refresh=refresh)
+	
 
 
 
