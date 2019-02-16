@@ -102,7 +102,7 @@ class WeatherProvider:
 
 		return name, url
 
-	def save_configuration_accu(self, name, url):
+	def save_configuration(self, name, url):
 	    """ Save selected location to configuration file.
 	    """
 
@@ -112,9 +112,17 @@ class WeatherProvider:
 	              encoding='utf-8') as configfile:
 	        parser.write(configfile)
 
+	def clear_configurate(self):
+	    """ Clear configurate file for weather site.
+	    """
+
+	    os.remove(self.get_configuration_file())
+
 	def run(self):
 		""" Run provider.
 		"""
+
+		self.clear_not_valid_cache()
 
 		content = self.get_page_source(self.url)
 		return self.get_weather_info(content)
@@ -181,15 +189,9 @@ class AccuWeatherProvider(WeatherProvider):
 	    		selected_index = int(input('Please select location: '))
 	    		location = locations[selected_index - 1]
 	    		locations = self.get_locations_accu(location[1])
-	    	self.save_configuration_accu(*location)
+	    	self.save_configuration(*location)
 	    else:
-	    	self.clear_configurate_accu()
-
-	def clear_configurate_accu(self):
-	    """ Clear configurate file for AccuWeather site.
-	    """
-
-	    os.remove(self.get_configuration_file())
+	    	self.clear_configurate()
 
 	def get_weather_info(self, page_content):
 	    """ Getting the final result in tuple from site accuweather.
@@ -305,15 +307,9 @@ class Rp5WeatherProvider(WeatherProvider):
 	    		location = locations[selected_index - 1]
 	    		locations = self.get_locations_rp5(location[1])
 
-	    	self.save_configuration_rp5(*location)
+	    	self.save_configuration(*location)
 	    else:
-	    	self.clear_configurate_rp5()
-
-	def clear_configurate_rp5(self):
-	    """ Clear configurate file for RP5.ua site.
-	    """
-
-	    os.remove(self.get_configuration_file())
+	    	self.clear_configurate()
 
 	def get_weather_info(self, page_content):
 	    """ Getting the final result in tuple from site rp5.
@@ -386,15 +382,9 @@ class SinoptikWeatherProvider(WeatherProvider):
 		    location = input('Введіть назву міста: \n')
 		    part_2_url = urllib.parse.quote(location)
 		    url = base_url + part_1_url + part_2_url
-		    self.save_configuration_sinoptik(location, url)
+		    self.save_configuration(location, url)
 	    else:
-		    self.clear_configurate_sinoptik()
-
-	def clear_configurate_sinoptik(self):
-	    """ Clear configurate file for sinoptik.ua site.
-	    """
-
-	    os.remove(self.get_configuration_file())
+		    self.clear_configurate()
 
 	def get_weather_info(self, page_content):
 	    """ Getting the final result in tuple from sinoptik.ua site.
@@ -410,7 +400,7 @@ class SinoptikWeatherProvider(WeatherProvider):
 	    	condition = condition_weather_details.find('div', 
                                                 class_='description')
 	    	if condition:
-	    		weather_info['cond'] = condition.text
+	    		weather_info['cond'] = condition.text.strip()
 	    	temp = weather_details.find('p', class_='today-temp')
 	    	if temp:
 	    		weather_info['temp'] = temp.text
@@ -447,7 +437,7 @@ class SinoptikWeatherProvider(WeatherProvider):
 	    				condition = weather_details.find('div', 
                                                      class_='description')
 	    				if condition:
-	    					weather_info['cond'] = condition.text
+	    					weather_info['cond'] = condition.text.strip()
 
 	    return weather_info
 
