@@ -8,7 +8,6 @@ import html
 from argparse import ArgumentParser
 
 from providermanager import ProviderManager
-from providers import WeatherProvider
 import config
 
 class App:
@@ -43,7 +42,7 @@ class App:
 
 		return arg_parser
 
-	def produse_output(self, title, location, info):
+	def produce_output(self, title, location, info):
 	    """ Displays the final result of the program
 	    """
 
@@ -57,6 +56,9 @@ class App:
 	    for key, value in info.items():
 	    	print(f' {key} : {html.unescape(value)}')
 	    	print("="*40, end='\n\n')
+
+	    if self.options.write_file:
+	    	self.write_file(title, location, info)
 
 	def write_file(self, title, location, info):
 		""" Write the weather data to text file.
@@ -81,17 +83,13 @@ class App:
 	    if not command_name:
 	    	for name, provider in self.providermanager._providers.items():
 	    		provider_obj = provider(self)
-	    		self.produse_output(provider_obj.title, 
+	    		self.produce_output(provider_obj.title, 
 	    			                provider_obj.location, 
 	    			                provider_obj.run())
 	    elif command_name in self.providermanager:
 	    	provider = self.providermanager[command_name]
 	    	provider_obj = provider(self)
-	    	self.produse_output(provider_obj.title, 
-	    		                provider_obj.location, 
-	    		                provider_obj.run())
-	    	if self.options.write_file:
-	    		self.write_file(provider_obj.title, 
+	    	self.produce_output(provider_obj.title, 
 	    		                provider_obj.location, 
 	    		                provider_obj.run())
 
