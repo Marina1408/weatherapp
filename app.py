@@ -9,7 +9,9 @@ from argparse import ArgumentParser
 
 from providermanager import ProviderManager
 import config
+import decorators
 
+@decorators.singleton
 class App:
 
 	""" Wether aggregator application.
@@ -42,6 +44,8 @@ class App:
 
 		return arg_parser
 
+	@decorators.count_function
+	@decorators.print_args
 	def produce_output(self, title, location, info):
 	    """ Displays the final result of the program
 	    """
@@ -71,6 +75,7 @@ class App:
 				f.write(title + '\n' + location + '  tomorrow' + 
 					    '\n' + str(info))
 
+	@decorators.timer
 	def run(self, argv):
 	    """ Run aplication.
 
