@@ -12,6 +12,7 @@ from shutil import rmtree
 from bs4 import BeautifulSoup
 
 import config
+import decorators
 
 
 class WeatherProvider:
@@ -25,16 +26,19 @@ class WeatherProvider:
 		self.location = location
 		self.url = url
 
-	def get_request_headers(self):
+	@staticmethod
+	def get_request_headers():
 	    """Getting headers of the request.
 	    """
 
 	    return {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64;)'}
 
-	def get_url_hash(self, url):
+	@staticmethod
+	def get_url_hash(url):
 	    return hashlib.md5(url.encode('utf-8')).hexdigest()
 
-	def get_cache_directory(self):
+	@staticmethod
+	def get_cache_directory():
 	    """ Path to cach directory.
 	    """
 
@@ -52,7 +56,8 @@ class WeatherProvider:
 	    with (cache_dir / url_hash).open('wb') as cache_file:
 	    	cache_file.write(page_source)
 
-	def is_valid(self, path):
+	@staticmethod
+	def is_valid(path):
 	    """ Check if current cache file is valid.
 	    """
 
@@ -73,6 +78,7 @@ class WeatherProvider:
 
 	    	return cache
 
+	@decorators.print_args
 	def get_page_source(self, url):
 	    """ Getting page from server.
 	    """
@@ -118,6 +124,7 @@ class WeatherProvider:
 
 	    os.remove(self.get_configuration_file())
 
+	@decorators.one_moment
 	def run(self):
 		""" Run provider.
 		"""
@@ -134,6 +141,7 @@ class WeatherProvider:
 	    cache_dir = self.get_cache_directory()
 	    rmtree(cache_dir)
 
+	@decorators.slow_down(sec=5)
 	def clear_not_valid_cache(self):
 	    """ Clear all not valid cache.
 	    """
@@ -156,7 +164,8 @@ class AccuWeatherProvider(WeatherProvider):
 	default_location = config.DEFAULT_ACCU_LOCATION_NAME
 	default_url = config.DEFAULT_ACCU_LOCATION_URL
 
-	def get_configuration_file(self):
+	@staticmethod
+	def get_configuration_file():
 	    """ Path to configuration file.
 	    """
 
@@ -263,7 +272,8 @@ class Rp5WeatherProvider(WeatherProvider):
 	default_location = config.DEFAULT_RP5_LOCATION_NAME
 	default_url = config.DEFAULT_RP5_LOCATION_URL
 
-	def get_configuration_file(self):
+	@staticmethod
+	def get_configuration_file():
 	    """ Path to configuration file.\
 	    """
 
@@ -311,6 +321,7 @@ class Rp5WeatherProvider(WeatherProvider):
 	    else:
 	    	self.clear_configurate()
 
+	@decorators.timer
 	def get_weather_info(self, page_content):
 	    """ Getting the final result in tuple from site rp5.
 	    """
@@ -364,7 +375,8 @@ class SinoptikWeatherProvider(WeatherProvider):
 	default_location = config.DEFAULT_SINOPTIK_LOCATION_NAME
 	default_url = config.DEFAULT_SINOPTIK_LOCATION_URL
 
-	def get_configuration_file(self):
+	@staticmethod
+	def get_configuration_file():
 	    """ Path to configuration file.
 	    """
 
@@ -386,6 +398,7 @@ class SinoptikWeatherProvider(WeatherProvider):
 	    else:
 		    self.clear_configurate()
 
+	@decorators.timer
 	def get_weather_info(self, page_content):
 	    """ Getting the final result in tuple from sinoptik.ua site.
 	    """
