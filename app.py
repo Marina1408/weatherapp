@@ -8,6 +8,9 @@ import html
 from argparse import ArgumentParser
 
 from providermanager import ProviderManager
+from commandmanager import CommandManager
+from commands import Configurate
+
 import config
 import decorators
 
@@ -20,7 +23,7 @@ class App:
 	def __init__(self):
 		self.arg_parser = self._arg_parse() 
 		self.providermanager = ProviderManager()
-
+		self.commandmanager = CommandManager()
 
 	def _arg_parse(self):
 		""" Initialize argument parser.
@@ -45,7 +48,6 @@ class App:
 		return arg_parser
 
 	@decorators.count_function
-	@decorators.print_args
 	def produce_output(self, title, location, info):
 	    """ Displays the final result of the program
 	    """
@@ -86,18 +88,23 @@ class App:
 	    command_name = self.options.command
 
 	    if not command_name:
-	    	for name, provider in self.providermanager._providers.items():
+	    	# run all command providers by default.
+	    	for name, provider in self.providermanager._commands.items():
 	    		provider_obj = provider(self)
 	    		self.produce_output(provider_obj.title, 
 	    			                provider_obj.location, 
-	    			                provider_obj.run())
+	    			                provider_obj.run(remaining_args))
 	    elif command_name in self.providermanager:
 	    	provider = self.providermanager[command_name]
 	    	provider_obj = provider(self)
 	    	self.produce_output(provider_obj.title, 
 	    		                provider_obj.location, 
-	    		                provider_obj.run())
-
+	    		                provider_obj.run(remaining_args))
+	    elif command_name in self.commandmanager:
+	    	command = self.commandmanager.get(command_name)
+	    	command_obj = command(self)
+	    	command_obj.run(remaining_args)
+	    
 
 def main(argv=sys.argv[1:]):
 	""" Main entry point.
