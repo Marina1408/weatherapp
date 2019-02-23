@@ -1,9 +1,9 @@
+# Fake user agentfor weather sites requests
+FAKE_MOZILLA_AGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64;)'
+
 # Configuration settings
 CONFIG_LOCATION = 'location'
-CONFIG_FOLDER = 'weatherapp_ini'           # configuration directory name
-CONFIG_FILE_ACCU = 'accu_weatherapp.ini'     
-CONFIG_FILE_RP5 = 'rp5_weatherapp.ini'
-CONFIG_FILE_SINOPTIK = 'sinoptik_weatherapp.ini'
+CONFIG_FILE = 'weatherapp_ini'           # configuration file name
 
 # Write to text file
 WRITE_FILE = 'weatherapp.txt'
