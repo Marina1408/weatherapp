@@ -1,156 +1,11 @@
-import time
-import configparser
-import hashlib
 import re
-import os
-import html
 import urllib.parse
-from pathlib import Path
-from urllib.request import urlopen, Request
-from shutil import rmtree
 
 from bs4 import BeautifulSoup
 
 import config
 import decorators
-
-
-class WeatherProvider:
-	""" Base weather provider.
-	"""
-
-	def __init__(self, app):
-		self.app = app
-
-		location, url = self.get_configuration()
-		self.location = location
-		self.url = url
-
-	@staticmethod
-	def get_request_headers():
-	    """Getting headers of the request.
-	    """
-
-	    return {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64;)'}
-
-	@staticmethod
-	def get_url_hash(url):
-	    return hashlib.md5(url.encode('utf-8')).hexdigest()
-
-	@staticmethod
-	def get_cache_directory():
-	    """ Path to cach directory.
-	    """
-
-	    return Path.home() / config.CACHE_DIR
-
-	def save_cache(self, url, page_source):
-	    """ Save page source data to file.
-	    """
-
-	    url_hash = self.get_url_hash(url)
-	    cache_dir = self.get_cache_directory()
-	    if not cache_dir.exists():
-	    	cache_dir.mkdir(parents=True)
-
-	    with (cache_dir / url_hash).open('wb') as cache_file:
-	    	cache_file.write(page_source)
-
-	@staticmethod
-	def is_valid(path):
-	    """ Check if current cache file is valid.
-	    """
-
-	    return (time.time() - path.stat().st_mtime) < config.CACH_TIME
-
-	def get_cache(self, url):
-	    """ Return cache data if any.
-	    """
-
-	    cache = b''
-	    url_hash = self.get_url_hash(url)
-	    cache_dir = self.get_cache_directory()
-	    if cache_dir.exists():
-	    	cache_path = cache_dir / url_hash
-	    	if cache_path.exists() and self.is_valid(cache_path):
-	    		with cache_path.open('rb') as cache_file:
-	    			cache = cache_file.read()
-
-	    	return cache
-
-	@decorators.print_args
-	def get_page_source(self, url):
-	    """ Getting page from server.
-	    """
-
-	    cache = self.get_cache(url)
-	    if cache and not self.app.options.refresh:
-	    	page_source = cache
-	    else:
-	    	request = Request(url, headers=self.get_request_headers())
-	    	page_source = urlopen(request).read()
-	    	self.save_cache(url, page_source)
-
-	    return page_source.decode('utf-8')
-
-	def get_configuration(self):
-		""" Returns configurated location name and url
-		"""
-
-		name = self.default_location
-		url = self.default_url
-		parser = configparser.ConfigParser(interpolation=None)
-		parser.read(self.get_configuration_file())
-
-		if config.CONFIG_LOCATION in parser.sections():
-			location_config = parser[config.CONFIG_LOCATION]
-			name, url = location_config['name'], location_config['url']
-
-		return name, url
-
-	def save_configuration(self, name, url):
-	    """ Save selected location to configuration file.
-	    """
-
-	    parser = configparser.ConfigParser(interpolation=None)
-	    parser[config.CONFIG_LOCATION] = {'name': name, 'url': url}
-	    with open(self.get_configuration_file(), 'w', 
-	              encoding='utf-8') as configfile:
-	        parser.write(configfile)
-
-	def clear_configurate(self):
-	    """ Clear configurate file for weather site.
-	    """
-
-	    os.remove(self.get_configuration_file())
-
-	@decorators.one_moment
-	def run(self):
-		""" Run provider.
-		"""
-
-		self.clear_not_valid_cache()
-
-		content = self.get_page_source(self.url)
-		return self.get_weather_info(content)
-
-	def clear_all_cache(self):
-	    """ Clear all cache files and the cache directory.
-	    """
-
-	    cache_dir = self.get_cache_directory()
-	    rmtree(cache_dir)
-
-	@decorators.slow_down(sec=5)
-	def clear_not_valid_cache(self):
-	    """ Clear all not valid cache.
-	    """
-
-	    cache_dir = self.get_cache_directory()
-	    if cache_dir.exists():
-	    	for file in os.listdir(cache_dir):
-	    		if not self.is_valid(cache_dir/file):
-	    			os.remove(cache_dir/file)
+from abstract import WeatherProvider
 
 
 class AccuWeatherProvider(WeatherProvider):
@@ -161,15 +16,20 @@ class AccuWeatherProvider(WeatherProvider):
 	name = config.ACCU_PROVIDER_NAME
 	title = config.ACCU_PROVIDER_TITLE
 
-	default_location = config.DEFAULT_ACCU_LOCATION_NAME
-	default_url = config.DEFAULT_ACCU_LOCATION_URL
+	def get_name(self):
+		return self.name
 
-	@staticmethod
-	def get_configuration_file():
-	    """ Path to configuration file.
-	    """
+	def get_default_location(self):
+		""" Default location name.
+		"""
 
-	    return Path.home() / config.CONFIG_FOLDER / config.CONFIG_FILE_ACCU
+		return config.DEFAULT_ACCU_LOCATION_NAME
+
+	def get_default_url(self):
+		""" Default location url.
+		"""
+
+		return config.DEFAULT_ACCU_LOCATION_URL
 
 	def get_locations_accu(self, locations_url):
 	    """ Getting locations from accuweather.
@@ -185,7 +45,7 @@ class AccuWeatherProvider(WeatherProvider):
 	    	locations.append((location, url))
 	    return locations
 
-	def configurate_accu(self, r_defaults=False):
+	def configurate(self, r_defaults=False):
 	    """ Displays the list of locations for the user to select from 
 	        AccuWeather.
 	    """
@@ -269,15 +129,20 @@ class Rp5WeatherProvider(WeatherProvider):
 	name = config.RP5_PROVIDER_NAME
 	title = config.RP5_PROVIDER_TITLE
 
-	default_location = config.DEFAULT_RP5_LOCATION_NAME
-	default_url = config.DEFAULT_RP5_LOCATION_URL
+	def get_name(self):
+		return self.name
 
-	@staticmethod
-	def get_configuration_file():
-	    """ Path to configuration file.\
-	    """
+	def get_default_location(self):
+		""" Default location name.
+		"""
 
-	    return Path.home() / config.CONFIG_FOLDER / config.CONFIG_FILE_RP5
+		return config.DEFAULT_RP5_LOCATION_NAME
+
+	def get_default_url(self):
+		""" Default location url.
+		"""
+
+		return config.DEFAULT_RP5_LOCATION_URL
 
 	def get_locations_rp5(self, locations_url):
 	    """ Getting locations from rp5.ua.
@@ -304,7 +169,7 @@ class Rp5WeatherProvider(WeatherProvider):
 
 	    return locations
 
-	def configurate_rp5(self, r_defaults=False):
+	def configurate(self, r_defaults=False):
 	    """ Displays the list of locations for the user to select from RP5.
 	    """
 
@@ -372,18 +237,21 @@ class SinoptikWeatherProvider(WeatherProvider):
 	name = config.SINOPTIK_PROVIDER_NAME
 	title = config.SINOPTIK_PROVIDER_TITLE
 
-	default_location = config.DEFAULT_SINOPTIK_LOCATION_NAME
-	default_url = config.DEFAULT_SINOPTIK_LOCATION_URL
+	def get_name(self):
+		return self.name
 
-	@staticmethod
-	def get_configuration_file():
-	    """ Path to configuration file.
-	    """
+	def get_default_location(self):
+		""" Default location name.
+		"""
 
-	    return (Path.home() / config.CONFIG_FOLDER /
-	                          config.CONFIG_FILE_SINOPTIK)
+		return config.DEFAULT_SINOPTIK_LOCATION_NAME
 
-	def configurate_sinoptik(self, r_defaults=False):
+	def get_default_url(self):
+		""" Default location url.
+		""" 
+		return config.DEFAULT_SINOPTIK_LOCATION_URL
+
+	def configurate(self, r_defaults=False):
 	    """ Asking the user to input the city.
 	    """
 
