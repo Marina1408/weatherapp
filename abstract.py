@@ -41,6 +41,21 @@ class Command(abc.ABC):
 	    Should be overriden in subclass.
 	    """
 
+	@staticmethod
+	def get_cache_directory():
+	    """ Return home directory to cach files.
+	    """
+
+	    return Path.home() / config.CACHE_DIR
+
+	def clear_all_cache(self):
+	    """ Clear all cache files and the cache directory.
+	    """
+
+	    cache_dir = self.get_cache_directory()
+	    rmtree(cache_dir)
+
+
 class WeatherProvider(Command):
 	
 	""" Weather provider abstract class.
@@ -112,13 +127,6 @@ class WeatherProvider(Command):
 		"""
 
 		return hashlib.md5(url.encode('utf-8')).hexdigest()
-
-	@staticmethod
-	def get_cache_directory():
-	    """ Return home directory to cach files.
-	    """
-
-	    return Path.home() / config.CACHE_DIR
 
 	def save_cache(self, url, page_source):
 	    """ Save page source data to file.
@@ -222,13 +230,6 @@ class WeatherProvider(Command):
 
 		content = self.get_page_source(self.url)
 		return self.get_weather_info(content)
-
-	def clear_all_cache(self):
-	    """ Clear all cache files and the cache directory.
-	    """
-
-	    cache_dir = self.get_cache_directory()
-	    rmtree(cache_dir)
 
 	def clear_not_valid_cache(self):
 	    """ Clear all not valid cache.
