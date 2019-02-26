@@ -38,9 +38,6 @@ class App:
                                 action = 'store_true')
 		arg_parser.add_argument('--refresh', help='Bypass caches', 
                                 action = 'store_true')
-		arg_parser.add_argument('clear-cache', 
-                                help='Clear all cache with cache directory', 
-                                nargs='?')
 		arg_parser.add_argument('--reset_defaults', 
                                 help='Clear configurate locations', 
                                 action = 'store_true')
