@@ -1,6 +1,6 @@
 """ App commands.
 """
-import pdb
+
 from abstract import Command
 
 
