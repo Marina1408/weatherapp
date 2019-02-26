@@ -55,6 +55,21 @@ class Command(abc.ABC):
 	    cache_dir = self.get_cache_directory()
 	    rmtree(cache_dir)
 
+	@staticmethod
+	def get_configuration_file():
+	    """ Path to configuration file.
+
+	    Returns path to configuration file in your home directory.
+	    """
+
+	    return Path.home() / config.CONFIG_FILE 
+
+	def clear_configurate(self):
+	    """ Clear configurate file for weather site.
+	    """
+
+	    os.remove(self.get_configuration_file())
+
 
 class WeatherProvider(Command):
 	
@@ -104,15 +119,6 @@ class WeatherProvider(Command):
 		    'feels_like':	''  # feels like temperature
 		}
 		"""
-
-	@staticmethod
-	def get_configuration_file():
-	    """ Path to configuration file.
-
-	    Returns path to configuration file in your home directory.
-	    """
-
-	    return Path.home() / config.CONFIG_FILE 
 
 	@staticmethod
 	def get_request_headers():
@@ -215,12 +221,6 @@ class WeatherProvider(Command):
 	    with open(config_file, 'w', 
 	              encoding='utf-8') as configfile:
 	        parser.write(configfile)
-
-	def clear_configurate(self):
-	    """ Clear configurate file for weather site.
-	    """
-
-	    os.remove(self.get_configuration_file())
 
 	def run(self, argv):
 		""" Run provider.
