@@ -13,7 +13,7 @@ class Configurate(Command):
 
 	def get_parser(self):
 		parser = super().get_parser()
-		parser.add_argument('provider', help='Provider name')
+		parser.add_argument('provider', help='Provider name', nargs='?')
 		return parser
 
 	def run(self, argv):
@@ -21,15 +21,20 @@ class Configurate(Command):
 		"""
 
 		params = self.get_parser().parse_args(argv)
-		if params.provider:
-			provider_name = params.provider
-			if provider_name in self.app.providermanager:
-				provider_factory = self.app.providermanager.get(provider_name)
-				provider_factory(self.app).configurate()
-		else:
-			pass
-		
 
+		if not self.app.options.reset_defaults:
+			if params.provider:
+				provider_name = params.provider
+				if provider_name in self.app.providermanager:
+					provider_factory = \
+					          self.app.providermanager.get(provider_name)
+					provider_factory(self.app).configurate()
+			else:
+				print('You must enter the name of provider!')
+		else:
+			self.clear_configurate()
+			print('The configuration file is deleted!')
+		
 
 class Providers(Command):
 
