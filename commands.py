@@ -1,6 +1,6 @@
 """ App commands.
 """
-
+import pdb
 from abstract import Command
 
 
@@ -17,8 +17,10 @@ class Configurate(Command):
 		return parser
 
 	def run(self, argv):
+		""" Run command.
+		"""
+
 		params = self.get_parser().parse_args(argv)
-		print(params)
 		if params.provider:
 			provider_name = params.provider
 			if provider_name in self.app.providermanager:
