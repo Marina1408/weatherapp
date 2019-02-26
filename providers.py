@@ -45,22 +45,19 @@ class AccuWeatherProvider(WeatherProvider):
 	    	locations.append((location, url))
 	    return locations
 
-	def configurate(self, r_defaults=False):
+	def configurate(self):
 	    """ Displays the list of locations for the user to select from 
 	        AccuWeather.
 	    """
 
-	    if not r_defaults:
-	    	locations = self.get_locations_accu(config.ACCU_BROWSE_LOCATIONS)
-	    	while locations:
-	    		for index, location in enumerate(locations):
-	    			print(f'{index + 1}. {location[0]}')
-	    		selected_index = int(input('Please select location: '))
-	    		location = locations[selected_index - 1]
-	    		locations = self.get_locations_accu(location[1])
-	    	self.save_configuration(*location)
-	    else:
-	    	self.clear_configurate()
+	    locations = self.get_locations_accu(config.ACCU_BROWSE_LOCATIONS)
+	    while locations:
+	    	for index, location in enumerate(locations):
+	    		print(f'{index + 1}. {location[0]}')
+	    	selected_index = int(input('Please select location: '))
+	    	location = locations[selected_index - 1]
+	    	locations = self.get_locations_accu(location[1])
+	    self.save_configuration(*location)
 
 	def get_weather_info(self, page_content):
 	    """ Getting the final result in tuple from site accuweather.
@@ -169,22 +166,19 @@ class Rp5WeatherProvider(WeatherProvider):
 
 	    return locations
 
-	def configurate(self, r_defaults=False):
+	def configurate(self):
 	    """ Displays the list of locations for the user to select from RP5.
 	    """
 
-	    if not r_defaults:
-	    	locations = self.get_locations_rp5(config.RP5_BROWSE_LOCATIONS)
-	    	while locations:
-	    		for index, location in enumerate(locations):
-	    			print(f'{index + 1}. {location[0]}')
-	    		selected_index = int(input('Please select location: '))
-	    		location = locations[selected_index - 1]
-	    		locations = self.get_locations_rp5(location[1])
+	    locations = self.get_locations_rp5(config.RP5_BROWSE_LOCATIONS)
+	    while locations:
+	    	for index, location in enumerate(locations):
+	    		print(f'{index + 1}. {location[0]}')
+	    	selected_index = int(input('Please select location: '))
+	    	location = locations[selected_index - 1]
+	    	locations = self.get_locations_rp5(location[1])
 
-	    	self.save_configuration(*location)
-	    else:
-	    	self.clear_configurate()
+	    self.save_configuration(*location)
 
 	@decorators.timer
 	def get_weather_info(self, page_content):
@@ -251,21 +245,19 @@ class SinoptikWeatherProvider(WeatherProvider):
 		""" 
 		return config.DEFAULT_SINOPTIK_LOCATION_URL
 
-	def configurate(self, r_defaults=False):
+	def configurate(self):
 	    """ Asking the user to input the city.
 	    """
 
-	    if not r_defaults:
-		    base_url = 'https://ua.sinoptik.ua'
-		    part_1_url = '/погода-'
-		    part_1_url = urllib.parse.quote(part_1_url)
-		    location = input('Введіть назву міста: \n')
-		    part_2_url = urllib.parse.quote(location)
-		    url = base_url + part_1_url + part_2_url
-		    self.save_configuration(location, url)
-	    else:
-		    self.clear_configurate()
+	    base_url = 'https://ua.sinoptik.ua'
+	    part_1_url = '/погода-'
+	    part_1_url = urllib.parse.quote(part_1_url)
+	    location = input('Введіть назву міста: \n')
+	    part_2_url = urllib.parse.quote(location)
+	    url = base_url + part_1_url + part_2_url
 
+	    self.save_configuration(location, url)
+	    
 	@decorators.timer
 	def get_weather_info(self, page_content):
 	    """ Getting the final result in tuple from sinoptik.ua site.
