@@ -44,18 +44,17 @@ class App:
 
 		return arg_parser
 
-	@decorators.count_function
 	def produce_output(self, title, location, info):
 	    """ Displays the final result of the program
 	    """
 
 	    print(f'{title}:')
-	    print("*"*10, end='\n\n')
+	    print("*"*12, end='\n\n')
 
-	    print(f'{location}')
+	    print(f'{location}:')
 	    if self.options.tomorrow:
 	    	print('Tomorrow:')
-	    print('-'*20)
+	    print('-'*12)
 	    for key, value in info.items():
 	    	print(f' {key} : {html.unescape(value)}')
 	    	print("="*40, end='\n\n')
