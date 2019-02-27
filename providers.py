@@ -54,9 +54,23 @@ class AccuWeatherProvider(WeatherProvider):
 	    while locations:
 	    	for index, location in enumerate(locations):
 	    		print(f'{index + 1}. {location[0]}')
-	    	selected_index = int(input('Please select location: '))
-	    	location = locations[selected_index - 1]
+
+	    	try:
+	    		selected_index = int(input('Please select location: '))
+	    	except ValueError:
+	    		print('You have entered the wrong data format! \n'
+	    			  'Repeat againe, input a number.')
+	    		break
+
+	    	try:
+	    		location = locations[selected_index - 1]
+	    	except IndexError:
+	    		print('You have entered a non-existent number in the list! \n'
+	    			  'Repeat againe.')
+	    		break
+
 	    	locations = self.get_locations_accu(location[1])
+
 	    self.save_configuration(*location)
 
 	def get_weather_info(self, page_content):
@@ -174,8 +188,21 @@ class Rp5WeatherProvider(WeatherProvider):
 	    while locations:
 	    	for index, location in enumerate(locations):
 	    		print(f'{index + 1}. {location[0]}')
-	    	selected_index = int(input('Please select location: '))
-	    	location = locations[selected_index - 1]
+
+	    	try:
+	    		selected_index = int(input('Please select location: '))
+	    	except (UnboundLocalError, ValueError):
+	    		print('You have entered the wrong data format! \n'
+	    			  'Repeat againe, input a number.')
+	    		break
+
+	    	try:
+	    		location = locations[selected_index - 1]
+	    	except IndexError:
+	    		print('You have entered a non-existent number in the list! \n'
+	    			  'Repeat againe.')
+	    		break
+
 	    	locations = self.get_locations_rp5(location[1])
 
 	    self.save_configuration(*location)
@@ -252,7 +279,18 @@ class SinoptikWeatherProvider(WeatherProvider):
 	    base_url = 'https://ua.sinoptik.ua'
 	    part_1_url = '/погода-'
 	    part_1_url = urllib.parse.quote(part_1_url)
-	    location = input('Введіть назву міста: \n')
+
+	    location = input('Введіть назву міста кирилицею: \n').lower()
+	    sample_location = re.compile('[А-яіЇЄє-]*')
+	    check = sample_location.match(location)
+
+	    if check.group(0) == location:
+	    	part_2_url = urllib.parse.quote(location)
+	    	url = base_url + part_1_url + part_2_url
+	    	self.save_configuration(location, url)
+	    else:
+	    	print('You inputed incorrect location! \nInput againe.')
+
 	    part_2_url = urllib.parse.quote(location)
 	    url = base_url + part_1_url + part_2_url
 
