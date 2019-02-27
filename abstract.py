@@ -4,6 +4,7 @@
 import os
 import abc
 import time
+import urllib
 import hashlib
 import argparse
 import configparser
@@ -190,7 +191,13 @@ class WeatherProvider(Command):
 		url = self.get_default_url()
 		parser = configparser.ConfigParser(interpolation=None)
 
-		parser.read(self.get_configuration_file())
+		try:
+			parser.read(self.get_configuration_file())
+		except configparser.Error:
+			print('Bad configuration file. ' 
+				 f'Please reconfigurate your provider: {self.name}')
+			self.clear_configurate()
+
 		if self.get_name() in parser.sections():
 			location_config = parser[self.get_name()]
 			name, url = location_config['name'], location_config['url']
