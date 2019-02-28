@@ -55,19 +55,25 @@ class AccuWeatherProvider(WeatherProvider):
 	    	for index, location in enumerate(locations):
 	    		print(f'{index + 1}. {location[0]}')
 
-	    	try:
-	    		selected_index = int(input('Please select location: '))
-	    	except ValueError:
-	    		print('You have entered the wrong data format! \n'
-	    			  'Repeat againe, input a number.')
-	    		break
+	    	if not self.app.options.debug:
+	    	    try:
+	    		    selected_index = int(input('Please select location: '))
+	    	    except ValueError:
+	    		    print('You have entered the wrong data format! \n'
+	    			      'Repeat againe, input a number.')
+	    		    break
+	    	else:
+	        	selected_index = int(input('Please select location: '))
 
-	    	try:
+	    	if not self.app.options.debug:
+	    	    try:
+	    		    location = locations[selected_index - 1]
+	    	    except IndexError:
+	    		    print('You have entered a non-existent number in the '
+	    		    	  'list!\nRepeat againe.')
+	    		    break
+	    	else:
 	    		location = locations[selected_index - 1]
-	    	except IndexError:
-	    		print('You have entered a non-existent number in the list! \n'
-	    			  'Repeat againe.')
-	    		break
 
 	    	locations = self.get_locations_accu(location[1])
 
@@ -189,19 +195,25 @@ class Rp5WeatherProvider(WeatherProvider):
 	    	for index, location in enumerate(locations):
 	    		print(f'{index + 1}. {location[0]}')
 
-	    	try:
+	    	if not self.app.options.debug:
+	    	    try:
+	    		    selected_index = int(input('Please select location: '))
+	    	    except (UnboundLocalError, ValueError):
+	    		    print('You have entered the wrong data format! \n'
+	    			      'Repeat againe, input a number.')
+	    		    break
+	    	else:
 	    		selected_index = int(input('Please select location: '))
-	    	except (UnboundLocalError, ValueError):
-	    		print('You have entered the wrong data format! \n'
-	    			  'Repeat againe, input a number.')
-	    		break
 
-	    	try:
+	    	if not self.app.options.debug:
+	    	    try:
+	    		    location = locations[selected_index - 1]
+	    	    except IndexError:
+	    		    print('You have entered a non-existent number in the '
+	    		    	  'list! \nRepeat againe.')
+	    		    break
+	    	else:
 	    		location = locations[selected_index - 1]
-	    	except IndexError:
-	    		print('You have entered a non-existent number in the list! \n'
-	    			  'Repeat againe.')
-	    		break
 
 	    	locations = self.get_locations_rp5(location[1])
 
@@ -281,7 +293,7 @@ class SinoptikWeatherProvider(WeatherProvider):
 	    part_1_url = urllib.parse.quote(part_1_url)
 
 	    location = input('Введіть назву міста кирилицею: \n').lower()
-	    sample_location = re.compile('[А-яіЇЄє-]*')
+	    sample_location = re.compile("[а-яіїє-]*")
 	    check = sample_location.match(location)
 
 	    if check.group(0) == location:
