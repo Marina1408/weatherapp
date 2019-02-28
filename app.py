@@ -41,6 +41,9 @@ class App:
 		arg_parser.add_argument('--reset_defaults', 
                                 help='Clear configurate locations', 
                                 action = 'store_true')
+		arg_parser.add_argument('--debug', 
+                              help='The program will not intercept the errors', 
+                              action = 'store_true')
 
 		return arg_parser
 
@@ -51,7 +54,7 @@ class App:
 	    print(f'{title}:')
 	    print("*"*12, end='\n\n')
 
-	    print(f'{location}:')
+	    print(f'{location.capitalize()}:')
 	    if self.options.tomorrow:
 	    	print('Tomorrow:')
 	    print('-'*12)
@@ -73,7 +76,6 @@ class App:
 				f.write(title + '\n' + location + '  tomorrow' + 
 					    '\n' + str(info))
 
-	@decorators.timer
 	def run(self, argv):
 	    """ Run aplication.
 
@@ -87,20 +89,45 @@ class App:
 	    	# run all command providers by default.
 	    	for name, provider in self.providermanager._commands.items():
 	    		provider_obj = provider(self)
-	    		self.produce_output(provider_obj.title, 
-	    			                provider_obj.location, 
-	    			                provider_obj.run(remaining_args))
+	    		if not self.options.debug:
+	    		    try:
+	    		        self.produce_output(provider_obj.title, 
+	    			                        provider_obj.location, 
+	    			                        provider_obj.run(remaining_args))
+	    		    except TypeError:
+	    		    	print('An error occurred! \n'
+	    		    		  'The program can not continue to work!')
+	    		else:
+		        	self.produce_output(provider_obj.title, 
+	    			                    provider_obj.location, 
+	    			                    provider_obj.run(remaining_args))
 	    elif command_name in self.providermanager:
 	    	provider = self.providermanager[command_name]
 	    	provider_obj = provider(self)
-	    	self.produce_output(provider_obj.title, 
-	    		                provider_obj.location, 
-	    		                provider_obj.run(remaining_args))
+	    	if not self.options.debug:
+	    		try:
+	    			self.produce_output(provider_obj.title, 
+	    		                        provider_obj.location, 
+	    		                        provider_obj.run(remaining_args))
+	    		except TypeError:
+	    			print('An error occurred! \n'
+	    				  'The program can not continue to work!')
+	    	else:
+	    		self.produce_output(provider_obj.title, 
+	    		                    provider_obj.location, 
+	    		                    provider_obj.run(remaining_args))
 	    elif command_name in self.commandmanager:
 	    	command = self.commandmanager.get(command_name)
 	    	command_obj = command(self)
-	    	command_obj.run(remaining_args)
-	    
+	    	if not self.options.debug:
+	    		try:
+	    			command_obj.run(remaining_args)
+	    		except TypeError:
+	    			print('An error occurred! \n'
+	    				  'The program can not continue to work!')
+	    	else:
+	    		command_obj.run(remaining_args)
+	    	
 
 def main(argv=sys.argv[1:]):
 	""" Main entry point.
