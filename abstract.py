@@ -173,15 +173,27 @@ class WeatherProvider(Command):
 	    """ Getting page from server.
 	    """
 
-	    cache = self.get_cache(url)
-	    if cache and not self.app.options.refresh:
-	    	page_source = cache
+	    if not self.app.options.debug:
+	        try:
+	    	    cache = self.get_cache(url)
+	    	    if cache and not self.app.options.refresh:
+	    		    page_source = cache
+	    	    else:
+	    		    request = Request(url, headers=self.get_request_headers())
+	    		    page_source = urlopen(request).read()
+	    		    self.save_cache(url, page_source)
+	    	    return page_source.decode('utf-8')
+	        except (UnboundLocalError, urllib.error.HTTPError):
+	    	    print('Incorrectly set location!')
 	    else:
-	    	request = Request(url, headers=self.get_request_headers())
-	    	page_source = urlopen(request).read()
-	    	self.save_cache(url, page_source)
-
-	    return page_source.decode('utf-8')
+	    	cache = self.get_cache(url)
+	    	if cache and not self.app.options.refresh:
+	    		page_source = cache
+	    	else:
+	    		    request = Request(url, headers=self.get_request_headers())
+	    		    page_source = urlopen(request).read()
+	    		    self.save_cache(url, page_source)
+	    	return page_source.decode('utf-8')
 
 	def _get_configuration(self):
 		""" Returns configurated location name and url
@@ -191,12 +203,15 @@ class WeatherProvider(Command):
 		url = self.get_default_url()
 		parser = configparser.ConfigParser(interpolation=None)
 
-		try:
+		if not self.app.options.debug:
+		    try:
+			    parser.read(self.get_configuration_file())
+		    except configparser.Error:
+			    print('Bad configuration file. ' 
+				     f'Please reconfigurate your provider: {self.name}')
+			    self.clear_configurate()
+		else:
 			parser.read(self.get_configuration_file())
-		except configparser.Error:
-			print('Bad configuration file. ' 
-				 f'Please reconfigurate your provider: {self.name}')
-			self.clear_configurate()
 
 		if self.get_name() in parser.sections():
 			location_config = parser[self.get_name()]
