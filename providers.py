@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import config
 import decorators
 from abstract import WeatherProvider
+from exception import WeatherProviderError
 
 
 class AccuWeatherProvider(WeatherProvider):
@@ -59,9 +60,10 @@ class AccuWeatherProvider(WeatherProvider):
 	    	    try:
 	    		    selected_index = int(input('Please select location: '))
 	    	    except ValueError:
-	    		    print('You have entered the wrong data format! \n'
-	    			      'Repeat againe, input a number.')
-	    		    break
+	    	    	raise WeatherProviderError(
+	    	    		 'You have entered the wrong data format! \n'
+	    	    		 'Repeat againe, input a number.', self.name).action()
+	    	    	break
 	    	else:
 	        	selected_index = int(input('Please select location: '))
 
@@ -69,9 +71,10 @@ class AccuWeatherProvider(WeatherProvider):
 	    	    try:
 	    		    location = locations[selected_index - 1]
 	    	    except IndexError:
-	    		    print('You have entered a non-existent number in the '
-	    		    	  'list!\nRepeat againe.')
-	    		    break
+	    	    	raise WeatherProviderError(
+	    	    		'You have entered a non-existent number in the '
+	    		    	'list!\nRepeat againe.', self.name).action()
+	    	    	break
 	    	else:
 	    		location = locations[selected_index - 1]
 
@@ -199,8 +202,10 @@ class Rp5WeatherProvider(WeatherProvider):
 	    	    try:
 	    		    selected_index = int(input('Please select location: '))
 	    	    except (UnboundLocalError, ValueError):
-	    		    print('You have entered the wrong data format! \n'
-	    			      'Repeat againe, input a number.')
+	    		    raise WeatherProviderError(
+	    	    		 'You have entered the wrong data format! \n'
+	    	    		 'Repeat againe, input a number.', 
+	    	    		  name1=self.name).action()
 	    		    break
 	    	else:
 	    		selected_index = int(input('Please select location: '))
@@ -209,8 +214,9 @@ class Rp5WeatherProvider(WeatherProvider):
 	    	    try:
 	    		    location = locations[selected_index - 1]
 	    	    except IndexError:
-	    		    print('You have entered a non-existent number in the '
-	    		    	  'list! \nRepeat againe.')
+	    		    raise WeatherProviderError(
+	    	    		'You have entered a non-existent number in the '
+	    		    	'list!\nRepeat againe.', name1=self.name).action()
 	    		    break
 	    	else:
 	    		location = locations[selected_index - 1]
