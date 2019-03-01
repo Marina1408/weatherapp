@@ -14,6 +14,7 @@ from urllib.request import urlopen, Request
 
 import config
 import decorators
+from exception import RequestError, ConfigParserError
 
 
 class Command(abc.ABC):
@@ -184,7 +185,8 @@ class WeatherProvider(Command):
 	    		    self.save_cache(url, page_source)
 	    	    return page_source.decode('utf-8')
 	        except (UnboundLocalError, urllib.error.HTTPError):
-	    	    print('Incorrectly set location!')
+	        	raise RequestError(
+	        		      'Incorrectly set location!', self.location).action()
 	    else:
 	    	cache = self.get_cache(url)
 	    	if cache and not self.app.options.refresh:
@@ -207,9 +209,9 @@ class WeatherProvider(Command):
 		    try:
 			    parser.read(self.get_configuration_file())
 		    except configparser.Error:
-			    print('Bad configuration file. ' 
-				     f'Please reconfigurate your provider: {self.name}')
-			    self.clear_configurate()
+		    	self.clear_configurate()
+		    	raise ConfigParserError('Bad configuration file. Please '
+		    	         'reconfigurate your provider: ', self.name).action()		    	
 		else:
 			parser.read(self.get_configuration_file())
 
