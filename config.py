@@ -1,3 +1,7 @@
+# Application default verbose and log levels
+DEFAULT_VERBOSE_LEVEL = 0
+DEFAULT_MESSAGE_FORMAT = '%(message)s'
+
 # Fake user agentfor weather sites requests
 FAKE_MOZILLA_AGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64;)'
 
