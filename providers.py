@@ -1,4 +1,5 @@
 import re
+import logging
 import urllib.parse
 
 from bs4 import BeautifulSoup
@@ -16,6 +17,8 @@ class AccuWeatherProvider(WeatherProvider):
 
 	name = config.ACCU_PROVIDER_NAME
 	title = config.ACCU_PROVIDER_TITLE
+	logger = logging.getLogger(__name__)
+
 
 	def get_name(self):
 		return self.name
@@ -50,33 +53,36 @@ class AccuWeatherProvider(WeatherProvider):
 	    """ Displays the list of locations for the user to select from 
 	        AccuWeather.
 	    """
-
+	  
 	    locations = self.get_locations_accu(config.ACCU_BROWSE_LOCATIONS)
 	    while locations:
 	    	for index, location in enumerate(locations):
 	    		print(f'{index + 1}. {location[0]}')
 
-	    	if not self.app.options.debug:
-	    	    try:
-	    		    selected_index = int(input('Please select location: '))
-	    	    except ValueError:
-	    	    	raise WeatherProviderError(
+	    	try:
+	    		selected_index = int(input('Please select location: '))
+	    	except ValueError:
+	    		msg = 'Error!'
+	    		if self.app.options.debug:
+	    			self.logger.exception(msg)
+	    		else:
+	    			self.logger.error(msg)	
+	    		raise WeatherProviderError(
 	    	    		 'You have entered the wrong data format! \n'
-	    	    		 'Repeat again, input a number.', self.name).action()
-	    	    	break
-	    	else:
-	        	selected_index = int(input('Please select location: '))
+	    	    		 'Repeat again, input a number.', 
+	    	    		  name1=self.name).action()
 
-	    	if not self.app.options.debug:
-	    	    try:
-	    		    location = locations[selected_index - 1]
-	    	    except IndexError:
-	    	    	raise WeatherProviderError(
+	    	try:
+	    		location = locations[selected_index - 1]
+	    	except IndexError:
+	    		msg = 'Error!'
+	    		if self.app.options.debug:
+	    			self.logger.exception(msg)
+	    		else:
+	    			self.logger.error(msg)
+	    			raise WeatherProviderError(
 	    	    		'You have entered a non-existent number in the '
 	    		    	'list!\nRepeat again.', self.name).action()
-	    	    	break
-	    	else:
-	    		location = locations[selected_index - 1]
 
 	    	locations = self.get_locations_accu(location[1])
 
@@ -148,6 +154,7 @@ class Rp5WeatherProvider(WeatherProvider):
 
 	name = config.RP5_PROVIDER_NAME
 	title = config.RP5_PROVIDER_TITLE
+	logger = logging.getLogger(__name__)
 
 	def get_name(self):
 		return self.name
@@ -198,28 +205,30 @@ class Rp5WeatherProvider(WeatherProvider):
 	    	for index, location in enumerate(locations):
 	    		print(f'{index + 1}. {location[0]}')
 
-	    	if not self.app.options.debug:
-	    	    try:
-	    		    selected_index = int(input('Please select location: '))
-	    	    except (UnboundLocalError, ValueError):
-	    		    raise WeatherProviderError(
+	    	try:
+	    		selected_index = int(input('Please select location: '))
+	    	except (UnboundLocalError, ValueError):
+	    		msg = 'Error!'
+	    		if self.app.options.debug:
+	    			self.logger.exception(msg)
+	    		else:
+	    			self.logger.error(msg)	
+	    		raise WeatherProviderError(
 	    	    		 'You have entered the wrong data format! \n'
 	    	    		 'Repeat again, input a number.', 
 	    	    		  name1=self.name).action()
-	    		    break
-	    	else:
-	    		selected_index = int(input('Please select location: '))
-
-	    	if not self.app.options.debug:
-	    	    try:
-	    		    location = locations[selected_index - 1]
-	    	    except IndexError:
-	    		    raise WeatherProviderError(
+	    	
+	    	try:
+	    		location = locations[selected_index - 1]
+	    	except IndexError:
+	    		msg = 'Error!'
+	    		if self.app.options.debug:
+	    			self.logger.exception(msg)
+	    		else:
+	    			self.logger.error(msg)	
+	    		raise WeatherProviderError(
 	    	    		'You have entered a non-existent number in the '
 	    		    	'list!\nRepeat again.', name1=self.name).action()
-	    		    break
-	    	else:
-	    		location = locations[selected_index - 1]
 
 	    	locations = self.get_locations_rp5(location[1])
 
@@ -246,11 +255,11 @@ class Rp5WeatherProvider(WeatherProvider):
 	    	temp = weather_details_temp.find('span', class_='t_0')
 	    	if temp:
 	    		weather_info['temp'] = temp.text
-	    	weather_details_feal_temp = weather_details.find('div',
-                                                class_='ArchiveTempFeeling')
-	    	feal_temp = weather_details_feal_temp.find('span', class_='t_0')
-	    	if feal_temp:
-	    		weather_info['feal_temp'] = feal_temp.text
+	    	# weather_details_feal_temp = weather_details.find('div',
+                                                # class_='ArchiveTempFeeling')
+	    	# feal_temp = weather_details_feal_temp.find('span', class_='t_0')
+	    	# if feal_temp:
+	    		# weather_info['feal_temp'] = feal_temp.text
 	    else:
 	    	weather_details = city_page.find('div', attrs={'id': 
                                                    'forecastShort-content'})
