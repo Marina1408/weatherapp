@@ -69,9 +69,13 @@ class App:
 		console_level = self.LOG_LEVEL_MAP.get(self.options.verbose_level,
 			                                   logging.WARNING)
 		console.setLevel(console_level)
+		fl = logging.FileHandler('app.log')
+		fl.setLevel(logging.WARNING)
 		formatter = logging.Formatter(config.DEFAULT_MESSAGE_FORMAT)
 		console.setFormatter(formatter)
+		fl.setFormatter(formatter)
 		root_logger.addHandler(console)
+		root_logger.addHandler(fl)
 
 	def produce_output(self, title, location, info):
 	    """ Displays the final result of the program
@@ -117,40 +121,39 @@ class App:
 	    	# run all command providers by default.
 	    	for name, provider in self.providermanager._commands.items():
 	    		provider_obj = provider(self)
-	    		if not self.options.debug:
-	    		    try:
-	    		        self.produce_output(provider_obj.title, 
-	    			                        provider_obj.location, 
-	    			                        provider_obj.run(remaining_args))
-	    		    except TypeError:
-	    		    	print('An error occurred! \n'
-	    		    		  'The program can not continue to work!')
-	    		else:
-		        	self.produce_output(provider_obj.title, 
+	    		try:
+	    		    self.produce_output(provider_obj.title, 
 	    			                    provider_obj.location, 
 	    			                    provider_obj.run(remaining_args))
+	    		except Exception:
+	    		    msg = ('Error during command: %s run.\n'
+	    		           'The program can not continue to work!')
+	    		    if self.options.debug:
+	    			    self.logger.exception(msg, command_name)
+	    		    else:
+	    			    self.logger.error(msg, command_name)	
 	    elif command_name in self.providermanager:
 	    	provider = self.providermanager[command_name]
 	    	provider_obj = provider(self)
-	    	if not self.options.debug:
-	    		try:
-	    			self.produce_output(provider_obj.title, 
-	    		                        provider_obj.location, 
-	    		                        provider_obj.run(remaining_args))
-	    		except TypeError:
-	    			print('An error occurred! \n'
-	    				  'The program can not continue to work!')
-	    	else:
+	    	try:
 	    		self.produce_output(provider_obj.title, 
 	    		                    provider_obj.location, 
 	    		                    provider_obj.run(remaining_args))
+	    	except Exception:
+	    		msg = ('Error during command: %s run.\n'
+	    		       'The program can not continue to work!')
+	    		if self.options.debug:
+	    			self.logger.exception(msg, command_name)
+	    		else:
+	    			self.logger.error(msg, command_name)	
 	    elif command_name in self.commandmanager:
 	    	command = self.commandmanager.get(command_name)
 	    	command_obj = command(self)
 	    	try:
 	    		command_obj.run(remaining_args)
 	    	except Exception:
-	    		msg = 'Error during command: %s run'
+	    		msg = ('Error during command: %s run.\n'
+	    		       'The program can not continue to work!')
 	    		if self.options.debug:
 	    			self.logger.exception(msg, command_name)
 	    		else:
