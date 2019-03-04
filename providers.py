@@ -62,7 +62,7 @@ class AccuWeatherProvider(WeatherProvider):
 	    	    except ValueError:
 	    	    	raise WeatherProviderError(
 	    	    		 'You have entered the wrong data format! \n'
-	    	    		 'Repeat againe, input a number.', self.name).action()
+	    	    		 'Repeat again, input a number.', self.name).action()
 	    	    	break
 	    	else:
 	        	selected_index = int(input('Please select location: '))
@@ -73,7 +73,7 @@ class AccuWeatherProvider(WeatherProvider):
 	    	    except IndexError:
 	    	    	raise WeatherProviderError(
 	    	    		'You have entered a non-existent number in the '
-	    		    	'list!\nRepeat againe.', self.name).action()
+	    		    	'list!\nRepeat again.', self.name).action()
 	    	    	break
 	    	else:
 	    		location = locations[selected_index - 1]
@@ -204,7 +204,7 @@ class Rp5WeatherProvider(WeatherProvider):
 	    	    except (UnboundLocalError, ValueError):
 	    		    raise WeatherProviderError(
 	    	    		 'You have entered the wrong data format! \n'
-	    	    		 'Repeat againe, input a number.', 
+	    	    		 'Repeat again, input a number.', 
 	    	    		  name1=self.name).action()
 	    		    break
 	    	else:
@@ -216,7 +216,7 @@ class Rp5WeatherProvider(WeatherProvider):
 	    	    except IndexError:
 	    		    raise WeatherProviderError(
 	    	    		'You have entered a non-existent number in the '
-	    		    	'list!\nRepeat againe.', name1=self.name).action()
+	    		    	'list!\nRepeat again.', name1=self.name).action()
 	    		    break
 	    	else:
 	    		location = locations[selected_index - 1]
