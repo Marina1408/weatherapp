@@ -6,6 +6,7 @@ import abc
 import time
 import urllib
 import hashlib
+import logging
 import argparse
 import configparser
 from pathlib import Path
@@ -79,6 +80,8 @@ class WeatherProvider(Command):
 
 	Defines behavior for all weather providers.
 	"""
+
+	logger = logging.getLogger(__name__)
 
 	def __init__(self, app):
 
@@ -174,29 +177,24 @@ class WeatherProvider(Command):
 	    """ Getting page from server.
 	    """
 
-	    if not self.app.options.debug:
-	        try:
-	    	    cache = self.get_cache(url)
-	    	    if cache and not self.app.options.refresh:
-	    		    page_source = cache
-	    	    else:
-	    		    request = Request(url, headers=self.get_request_headers())
-	    		    page_source = urlopen(request).read()
-	    		    self.save_cache(url, page_source)
-	    	    return page_source.decode('utf-8')
-	        except (UnboundLocalError, urllib.error.HTTPError):
-	        	raise RequestError(
-	        		      'Incorrectly set location!', self.location).action()
-	    else:
+	    try:
 	    	cache = self.get_cache(url)
 	    	if cache and not self.app.options.refresh:
 	    		page_source = cache
 	    	else:
-	    		    request = Request(url, headers=self.get_request_headers())
-	    		    page_source = urlopen(request).read()
-	    		    self.save_cache(url, page_source)
+	    		request = Request(url, headers=self.get_request_headers())
+	    		page_source = urlopen(request).read()
+	    		self.save_cache(url, page_source)
 	    	return page_source.decode('utf-8')
-
+	    except (UnboundLocalError, urllib.error.HTTPError):
+	        msg = 'Error!'
+	        if self.app.options.debug:
+	        	self.logger.exception(msg)
+	        else:
+	        	self.logger.error(msg)
+	        raise RequestError(
+	        		      'Incorrectly set location!', self.location).action()
+	    
 	def _get_configuration(self):
 		""" Returns configurated location name and url
 		"""
@@ -205,15 +203,18 @@ class WeatherProvider(Command):
 		url = self.get_default_url()
 		parser = configparser.ConfigParser(interpolation=None)
 
-		if not self.app.options.debug:
-		    try:
-			    parser.read(self.get_configuration_file())
-		    except configparser.Error:
-		    	self.clear_configurate()
-		    	raise ConfigParserError('Bad configuration file. Please '
-		    	         'reconfigurate your provider: ', self.name).action()		    	
-		else:
+		try:
 			parser.read(self.get_configuration_file())
+		except (configparser.Error, configparser.ParsingError,
+			    configparser.MissingSectionHeaderError):
+		    self.clear_configurate()
+		    msg = 'Error!'
+		    if self.app.options.debug:
+		    	self.logger.exception(msg)
+		    else:
+		    	self.logger.error(msg)
+		    raise ConfigParserError('Bad configuration file. Please '
+		    	         'reconfigurate your provider: ', self.name).action()		    	
 
 		if self.get_name() in parser.sections():
 			location_config = parser[self.get_name()]
