@@ -69,11 +69,13 @@ class App:
 		console_level = self.LOG_LEVEL_MAP.get(self.options.verbose_level,
 			                                   logging.WARNING)
 		console.setLevel(console_level)
-		fl = logging.FileHandler('app.log')
-		fl.setLevel(logging.WARNING)
 		formatter = logging.Formatter(config.DEFAULT_MESSAGE_FORMAT)
 		console.setFormatter(formatter)
+
+		fl = logging.FileHandler('app.log')
+		fl.setLevel(logging.ERROR)
 		fl.setFormatter(formatter)
+
 		root_logger.addHandler(console)
 		root_logger.addHandler(fl)
 
