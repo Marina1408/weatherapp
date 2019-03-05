@@ -255,11 +255,11 @@ class Rp5WeatherProvider(WeatherProvider):
 	    	temp = weather_details_temp.find('span', class_='t_0')
 	    	if temp:
 	    		weather_info['temp'] = temp.text
-	    	# weather_details_feal_temp = weather_details.find('div',
-                                                # class_='ArchiveTempFeeling')
-	    	# feal_temp = weather_details_feal_temp.find('span', class_='t_0')
-	    	# if feal_temp:
-	    		# weather_info['feal_temp'] = feal_temp.text
+	    	weather_details_feal_temp = weather_details.find('div',
+                                                class_='ArchiveTempFeeling')
+	    	feal_temp = weather_details_feal_temp.find('span', class_='t_0')
+	    	if feal_temp:
+	    		weather_info['feal_temp'] = feal_temp.text
 	    else:
 	    	weather_details = city_page.find('div', attrs={'id': 
                                                    'forecastShort-content'})
