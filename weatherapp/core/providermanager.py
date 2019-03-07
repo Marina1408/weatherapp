@@ -1,6 +1,7 @@
-from providers import (AccuWeatherProvider, Rp5WeatherProvider, 
-                       SinoptikWeatherProvider)
-import commandmanager
+from weatherapp.core.providers import (AccuWeatherProvider, 
+	                                   Rp5WeatherProvider, 
+                                       SinoptikWeatherProvider)
+from weatherapp.core import commandmanager
 
 class ProviderManager(commandmanager.CommandManager):
 	""" Discovers registered providers and loads them.

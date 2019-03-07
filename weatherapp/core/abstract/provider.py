@@ -1,77 +1,16 @@
-""" Abstract classes for project.
-"""
-
 import os
 import abc
 import time
 import urllib
 import hashlib
 import logging
-import argparse
 import configparser
 from pathlib import Path
-from shutil import rmtree
 from urllib.request import urlopen, Request
 
-import config
-import decorators
-from exception import RequestError, ConfigParserError
-
-
-class Command(abc.ABC):
-
-	""" Base class for commands.
-
-	:param app: Main application instance
-	:type app: app.App
-	"""
-
-	def __init__(self, app):
-		self.app = app
-
-	@staticmethod
-	def get_parser():
-		""" Initialize argument parser for command.
-		"""
-
-		parser = argparse.ArgumentParser()
-		return parser
-
-	@abc.abstractmethod
-	def run(self, argv):
-	    """ Invoked by application when the command is run.
-
-	    Should be overriden in subclass.
-	    """
-
-	@staticmethod
-	def get_cache_directory():
-	    """ Return home directory to cach files.
-	    """
-
-	    return Path.home() / config.CACHE_DIR
-
-	def clear_all_cache(self):
-	    """ Clear all cache files and the cache directory.
-	    """
-
-	    cache_dir = self.get_cache_directory()
-	    rmtree(cache_dir)
-
-	@staticmethod
-	def get_configuration_file():
-	    """ Path to configuration file.
-
-	    Returns path to configuration file in your home directory.
-	    """
-
-	    return Path.home() / config.CONFIG_FILE 
-
-	def clear_configurate(self):
-	    """ Clear configurate file for weather site.
-	    """
-
-	    os.remove(self.get_configuration_file())
+from weatherapp.core import config
+from weatherapp.core.abstract.command import Command
+from weatherapp.core.exception import RequestError, ConfigParserError
 
 
 class WeatherProvider(Command):
@@ -265,48 +204,3 @@ class WeatherProvider(Command):
 	    	for file in os.listdir(cache_dir):
 	    		if not self.is_valid(cache_dir/file):
 	    			os.remove(cache_dir/file)
-
-class Manager(abc.ABC):
-
-	""" Abstract class for project command managers.
-	"""
-
-	@abc.abstractmethod
-	def add(self, name, command):
-		""" Add new command to manager.
-
-		:param name:     command name
-		:type name:      str
-		:param command:  command class
-		:type command:   Sub type of weatherapp.abstract.Command
-		"""
-
-	@abc.abstractmethod
-	def get(self, name):
-		""" Get command from manager by name.
-
-		:param name:  command name
-		:type name:   str 
-		"""
-
-	@abc.abstractmethod
-	def __getitem__(self, name):
-		""" Get item by name.
-
-		Implementation of this 'dunder' method allow us to access commands
-		by name at the same way at it works in dictionary.
-
-		:param name:  command name
-		:type name:   str 
-		"""
-
-	@abc.abstractmethod
-	def __contains__(self, name):
-		""" Check if command with provided name is in manager.
-
-		Implementation of this 'dunder' method allow us to use 'in' operator
-		with manager to check if command exists in manager.
-
-		:param name:  command name
-		:type name:   str
-		"""

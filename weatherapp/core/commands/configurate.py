@@ -1,10 +1,8 @@
-""" App commands.
-"""
-
 import logging
 
-import config
-from abstract import Command
+from weatherapp.core import config
+from weatherapp.core.abstract import Command
+
 
 class Configurate(Command):
 
@@ -75,37 +73,3 @@ class Configurate(Command):
 		else:
 			print('You have entered an invalid index!')
 
-
-		
-
-class Providers(Command):
-
-	""" Print all available providers.
-	"""
-
-	name = 'providers'
-
-	def run(self, argv):
-		""" Run command.
-		"""
-		print('All available providers:')
-
-		for provider in self.app.providermanager._commands:
-			print(provider)
-
-
-class ClearCacheDir(Command):
-
-	""" Clear all cache files and the cach directory.
-	"""
-
-	name = 'clear_cache'
-
-	def run(self, argv):
-		""" Run command.
-		"""
-
-		self.clear_all_cache()
-		print('Clear all cache files.')
-
-			

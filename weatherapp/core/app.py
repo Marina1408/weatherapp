@@ -8,12 +8,11 @@ import html
 import logging
 from argparse import ArgumentParser
 
-from providermanager import ProviderManager
-from commandmanager import CommandManager
-from commands import Configurate
-
-import config
-import decorators
+from weatherapp.core.providermanager import ProviderManager
+from weatherapp.core.commandmanager import CommandManager
+from weatherapp.core.commands import Configurate
+from weatherapp.core import config
+from weatherapp.core import decorators
 
 @decorators.singleton
 class App:
