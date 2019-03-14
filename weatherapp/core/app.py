@@ -93,7 +93,7 @@ class App:
 		root_logger.addHandler(console)
 		root_logger.addHandler(fl)
 
-	def produce_output(self, title, location, data):
+	def produce_output(self, title, location, data, argv):
 	    """ Displays the final result of the program
 	    """
 
@@ -105,7 +105,7 @@ class App:
 	    else:
 	    	self.stdout.write('Today \n')
 
-	    self.stdout.write(formatter.emit(columns, data))
+	    self.stdout.write(formatter.emit(columns, data, argv))
 	    self.stdout.write('\n')
 
 	    if self.options.write_file:
@@ -148,7 +148,8 @@ class App:
 			try:
 				self.produce_output(provider.title, 
 	    		                    provider.location, 
-	    		                    provider.run(argv))
+	    		                    provider.run(argv),
+	    		                    argv)
 			except Exception:
 				msg = ('Error during command: %s run.\n'
 	    		       'The program can not continue to work!')
@@ -166,7 +167,8 @@ class App:
 			try:
 				self.produce_output(provider.title, 
 					                provider.location, 
-					                provider.run(argv))
+					                provider.run(argv),
+					                argv)
 			except Exception:
 				msg = ('Error during command.\n'
 					   'The program can not continue to work!')
