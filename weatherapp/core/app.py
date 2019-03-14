@@ -8,7 +8,8 @@ import html
 import logging
 from argparse import ArgumentParser
 
-from weatherapp.core.formatters import TableFormatter, ListFormatter
+from weatherapp.core.formatters import (TableFormatter, ListFormatter, 
+	                                    CsvFormatter)
 from weatherapp.core.providermanager import ProviderManager
 from weatherapp.core.commandmanager import CommandManager
 from weatherapp.core.commands import Configurate
@@ -68,7 +69,8 @@ class App:
 	@staticmethod
 	def _load_formatters():
 		return {'table': TableFormatter,
-		         'list': ListFormatter}
+		         'list': ListFormatter,
+		          'csv': CsvFormatter}
 
 	def configure_logging(self):
 		""" Create logging handlers for any log output.
@@ -99,9 +101,9 @@ class App:
 	    columns = [title, location]
 
 	    if self.options.tomorrow:
-	    	self.stdout.write('Tomorrow: \n')
+	    	self.stdout.write('Tomorrow \n')
 	    else:
-	    	self.stdout.write('Today: \n')
+	    	self.stdout.write('Today \n')
 
 	    self.stdout.write(formatter.emit(columns, data))
 	    self.stdout.write('\n')
