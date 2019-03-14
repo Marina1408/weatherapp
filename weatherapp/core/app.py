@@ -8,6 +8,7 @@ import html
 import logging
 from argparse import ArgumentParser
 
+from weatherapp.core.formatters import TableFormatter, ListFormatter
 from weatherapp.core.providermanager import ProviderManager
 from weatherapp.core.commandmanager import CommandManager
 from weatherapp.core.commands import Configurate
@@ -26,10 +27,14 @@ class App:
 	                 2: logging.DEBUG}
 
 
-	def __init__(self):
+	def __init__(self, stdin=None, stdout=None, stderr=None):
+		self.stdin = stdin or sys.stdin
+		self.stdout = stdout or sys.stdout
+		self.stderr = stderr or sys.stderr
 		self.arg_parser = self._arg_parse() 
 		self.providermanager = ProviderManager()
 		self.commandmanager = CommandManager()
+		self.formatters = self._load_formatters()
 
 	def _arg_parse(self):
 		""" Initialize argument parser.
@@ -54,8 +59,16 @@ class App:
 			                    dest='verbose_level',
 			                    default=config.DEFAULT_VERBOSE_LEVEL,
 			                    help='Increase verbosity of output')
+		arg_parser.add_argument('-f', '--formatter', action='store',
+			                    default='list',
+			                    help='Output format, defaults to table')
 
 		return arg_parser
+
+	@staticmethod
+	def _load_formatters():
+		return {'table': TableFormatter,
+		         'list': ListFormatter}
 
 	def configure_logging(self):
 		""" Create logging handlers for any log output.
@@ -78,23 +91,23 @@ class App:
 		root_logger.addHandler(console)
 		root_logger.addHandler(fl)
 
-	def produce_output(self, title, location, info):
+	def produce_output(self, title, location, data):
 	    """ Displays the final result of the program
 	    """
 
-	    print(f'{title}:')
-	    print("*"*12, end='\n\n')
+	    formatter = self.formatters.get(self.options.formatter, 'list')()
+	    columns = [title, location]
 
-	    print(f'{location.capitalize()}:')
 	    if self.options.tomorrow:
-	    	print('Tomorrow:')
-	    print('-'*12)
-	    for key, value in info.items():
-	    	print(f' {key} : {html.unescape(value)}')
-	    	print("="*40, end='\n\n')
+	    	self.stdout.write('Tomorrow: \n')
+	    else:
+	    	self.stdout.write('Today: \n')
+
+	    self.stdout.write(formatter.emit(columns, data))
+	    self.stdout.write('\n')
 
 	    if self.options.write_file:
-	    	self.write_file(title, location, info)
+	    	self.write_file(title, location, data)
 
 	def write_file(self, title, location, info):
 		""" Write the weather data to text file.
@@ -107,6 +120,59 @@ class App:
 				f.write(title + '\n' + location + '  tomorrow' + 
 					    '\n' + str(info))
 
+	def run_command(self, name, argv):
+		""" Run command.
+		"""
+
+		command = self.commandmanager.get(name)
+		command = command(self)
+		try:
+			command.run(argv)
+		except Exception:
+			msg = ('Error during command: %s run.\n'
+	    		   'The program can not continue to work!')
+			if self.options.debug:
+				self.logger.exception(msg, name)
+			else:
+				self.logger.error(msg, name)
+
+	def run_provider(self, name, argv):
+		""" Run specified provider.
+		"""
+
+		provider = self.providermanager.get(name)
+		if provider:
+			provider = provider(self)
+			try:
+				self.produce_output(provider.title, 
+	    		                    provider.location, 
+	    		                    provider.run(argv))
+			except Exception:
+				msg = ('Error during command: %s run.\n'
+	    		       'The program can not continue to work!')
+				if self.options.debug:
+					self.logger.exception(msg, name)
+				else:
+					self.logger.error(msg, name)
+
+	def run_providers(self, argv):
+		""" Execute all available providers.
+		"""
+
+		for provider in self.providermanager._commands.values():
+			provider = provider(self)
+			try:
+				self.produce_output(provider.title, 
+					                provider.location, 
+					                provider.run(argv))
+			except Exception:
+				msg = ('Error during command.\n'
+					   'The program can not continue to work!')
+				if self.options.debug:
+					self.logger.exception(msg)
+				else:
+					self.logger.error(msg)
+
 	def run(self, argv):
 	    """ Run aplication.
 
@@ -116,50 +182,18 @@ class App:
 	    self.options, remaining_args = self.arg_parser.parse_known_args(argv)
 	    self.configure_logging()
 	    self.logger.debug('Got the following args %s', argv)
-	    command_name = self.options.command
 
+	    command_name = self.options.command
 	    if not command_name:
-	    	# run all command providers by default.
-	    	for name, provider in self.providermanager._commands.items():
-	    		provider_obj = provider(self)
-	    		try:
-	    		    self.produce_output(provider_obj.title, 
-	    			                    provider_obj.location, 
-	    			                    provider_obj.run(remaining_args))
-	    		except Exception:
-	    		    msg = ('Error during command: %s run.\n'
-	    		           'The program can not continue to work!')
-	    		    if self.options.debug:
-	    			    self.logger.exception(msg, command_name)
-	    		    else:
-	    			    self.logger.error(msg, command_name)	
-	    elif command_name in self.providermanager:
-	    	provider = self.providermanager[command_name]
-	    	provider_obj = provider(self)
-	    	try:
-	    		self.produce_output(provider_obj.title, 
-	    		                    provider_obj.location, 
-	    		                    provider_obj.run(remaining_args))
-	    	except Exception:
-	    		msg = ('Error during command: %s run.\n'
-	    		       'The program can not continue to work!')
-	    		if self.options.debug:
-	    			self.logger.exception(msg, command_name)
-	    		else:
-	    			self.logger.error(msg, command_name)	
-	    elif command_name in self.commandmanager:
-	    	command = self.commandmanager.get(command_name)
-	    	command_obj = command(self)
-	    	try:
-	    		command_obj.run(remaining_args)
-	    	except Exception:
-	    		msg = ('Error during command: %s run.\n'
-	    		       'The program can not continue to work!')
-	    		if self.options.debug:
-	    			self.logger.exception(msg, command_name)
-	    		else:
-	    			self.logger.error(msg, command_name)
-	    	
+	    	# run all command providers by default
+	    	return self.run_providers(remaining_args)
+
+	    if command_name in self.commandmanager:
+	    	return self.run_command(command_name, remaining_args)
+
+	    if command_name in self.providermanager:
+	    	return self.run_provider(command_name, remaining_args)
+		    	
 
 def main(argv=sys.argv[1:]):
 	""" Main entry point.
