@@ -11,7 +11,7 @@ class Providers(Command):
 	def run(self, argv):
 		""" Run command.
 		"""
-		print('All available providers:')
+		self.app.stdout.write('All available providers:' + '\n')
 
 		for provider in self.app.providermanager._commands:
-			print(provider)
+			self.app.stdout.write(f'{provider} \n')
