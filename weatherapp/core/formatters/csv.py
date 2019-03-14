@@ -6,14 +6,16 @@ class CsvFormatter(Formatter):
     """ CSV formatter for app output.
     """
 
-    def emit(self, columns, data):
+    def emit(self, columns, data, argv):
         """ Format and print data from the iterable source.
 
-        :param column_names: names of the columns
-        :type column_names: list
+        :param columns: names of the columns
+        :type columns: list
         :param data: iterable data source, one tuple per object
                      with values in order of column names
         :type data: list or tuple
+        :param argv: remaining_args from parser
+        :type argv: str or int
         """
 
         title = columns[0]
