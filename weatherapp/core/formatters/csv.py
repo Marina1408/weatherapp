@@ -6,6 +6,9 @@ class CsvFormatter(Formatter):
     """ CSV formatter for app output.
     """
 
+
+    name = 'csv'
+
     def emit(self, columns, data, argv):
         """ Format and print data from the iterable source.
 
