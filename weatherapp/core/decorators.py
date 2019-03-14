@@ -25,7 +25,7 @@ def timer(func):
 		start_time = time.perf_counter()
 		result = func(*args, **kwargs)
 		run_time = time.perf_counter() - start_time
-		print(f"Finished {func.__name__!r} in {run_time:.4f} secs")
+		self.app.stdout.write(f"Finished {func.__name__!r} in {run_time:.4f} secs \n")
 		return result
 	return wrapper
 
@@ -34,8 +34,8 @@ def print_args(func):
 	    before it is executed
 	"""
 	def wrapper(*args, **kwargs):
-		print('Function argumens:')
-		print(*args, **kwargs)
+		self.app.stdout.write('Function argumens: \n')
+		self.app.stdout.write(*args, **kwargs + '\n')
 		return func(*args, **kwargs)
 	return wrapper
 
@@ -44,7 +44,7 @@ def count_function(func):
 	def wrapper(*args, **kwargs):
 		wrapper.count += 1
 		result = func(*args, **kwargs)
-		print(f"Function {func.__name__!r} was called {wrapper.count} times")
+		self.app.stdout.write(f"Function {func.__name__!r} was called {wrapper.count} times \n")
 		return result
 	wrapper.count = 0
 	return wrapper
@@ -55,12 +55,10 @@ def memoize(func):
 	memo = {}
 	def wrapper(*args):
 		if args in memo:
-			print(2)
 			return memo[args]
 		else:
 			result = func(*args)
 			memo[args] = result
-			print(1)
 			return result
 	return wrapper
 
