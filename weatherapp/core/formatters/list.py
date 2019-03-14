@@ -13,7 +13,7 @@ class ListFormatter(Formatter):
 	    title = columns[0]
 	    location = columns[1]
 
-	    a = title + '\n' + "*"*12 + '\n' + location + '\n' + '-'*12 
+	    a = title + '\n' + "*"*12 + '\n' + location + '\n' + '='*12 
 	    b = []
 
 	    for key, value in data.items():
@@ -21,8 +21,18 @@ class ListFormatter(Formatter):
 	    	b.append(c)
 
 	    b = str(b)
+	    b = b.replace("',", "'\n")
+	    b = b.replace('",', "'\n")
+	    b = b.replace('"', '')
+	    b = b.replace("[", ' ')
+	    b = b.replace("]", '')
+	    b = b.replace("'", '')
+
 	    return a + '\n' + b + '\n'
-	   
+
+
+
+        
 	    
 	    
 	    
