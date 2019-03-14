@@ -32,7 +32,7 @@ class Configurate(Command):
 		else:
 			if self.app.options.reset_defaults:
 				self.clear_configurate()
-				print('The configuration file is deleted!')
+				self.app.stdout.write('The configuration file is deleted! \n')
 			else:
 				self.logging_configuration()
 
