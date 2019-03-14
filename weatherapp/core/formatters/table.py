@@ -9,6 +9,9 @@ class TableFormatter(Formatter):
     """ Table formatter for app output.
     """
 
+
+    name = 'table'
+
     def get_parser(self):
         parser = ArgumentParser()
         parser.add_argument('-align', action='store',
