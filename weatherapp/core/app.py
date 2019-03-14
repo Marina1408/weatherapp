@@ -8,10 +8,9 @@ import html
 import logging
 from argparse import ArgumentParser
 
-from weatherapp.core.formatters import (TableFormatter, ListFormatter, 
-	                                    CsvFormatter)
-from weatherapp.core.providermanager import ProviderManager
-from weatherapp.core.commandmanager import CommandManager
+from weatherapp.core.managers.providermanager import ProviderManager
+from weatherapp.core.managers.commandmanager import CommandManager
+from weatherapp.core.managers.formattermanager import FormatterManager
 from weatherapp.core.commands import Configurate
 from weatherapp.core import config
 from weatherapp.core import decorators
@@ -35,7 +34,7 @@ class App:
 		self.arg_parser = self._arg_parse() 
 		self.providermanager = ProviderManager()
 		self.commandmanager = CommandManager()
-		self.formatters = self._load_formatters()
+		self.formattermanager = FormatterManager()
 
 	def _arg_parse(self):
 		""" Initialize argument parser.
@@ -97,7 +96,12 @@ class App:
 	    """ Displays the final result of the program
 	    """
 
-	    formatter = self.formatters.get(self.options.formatter, 'list')()
+	    if self.options.formatter:
+	    	name = self.options.formatter
+	    	formatter = self.formattermanager.get(name)()
+	    else:
+	    	formatter = self.formattermanager.get('list')()
+
 	    columns = [title, location]
 
 	    if self.options.tomorrow:
