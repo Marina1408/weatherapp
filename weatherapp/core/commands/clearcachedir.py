@@ -13,4 +13,4 @@ class ClearCacheDir(Command):
 		"""
 
 		self.clear_all_cache()
-		print('Clear all cache files.')
+		self.app.stdout.write('Clear all cache files. \n')
