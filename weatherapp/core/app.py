@@ -61,7 +61,7 @@ class App:
 			                    help='Increase verbosity of output')
 		arg_parser.add_argument('-f', '--formatter', action='store',
 			                    default='list',
-			                    help='Output format, defaults to table')
+			                    help='Output format, defaults to list')
 
 		return arg_parser
 
