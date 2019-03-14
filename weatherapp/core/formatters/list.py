@@ -6,6 +6,9 @@ class ListFormatter(Formatter):
  	""" List formatter for app output.
  	"""
 
+
+ 	name = 'list'
+
  	def emit(self, columns, data, argv):
 	    """ Format and print data from the iterable source.
 
