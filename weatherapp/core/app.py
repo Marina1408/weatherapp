@@ -1,19 +1,23 @@
-#!/usr/bin/env python
-
 """ Main application module.
 """
 
+import os
 import sys
 import html
 import logging
+import configparser
+from pathlib import Path
 from argparse import ArgumentParser
 
-from weatherapp.core.managers.providermanager import ProviderManager
-from weatherapp.core.managers.commandmanager import CommandManager
-from weatherapp.core.managers.formattermanager import FormatterManager
+from weatherapp.core.managers import (ProviderManager, 
+	                                  CommandManager, 
+	                                  FormatterManager)
+from weatherapp.core.exception import ConfigParserError
 from weatherapp.core.commands import Configurate
-from weatherapp.core import config
+from weatherapp.core.abstract import Command
 from weatherapp.core import decorators
+from weatherapp.core import config
+
 
 @decorators.singleton
 class App:
@@ -22,9 +26,14 @@ class App:
 	"""
 
 	logger = logging.getLogger(__name__)
+
 	LOG_LEVEL_MAP = {0: logging.WARNING,
 	                 1: logging.INFO,
 	                 2: logging.DEBUG}
+
+	LOG_LEVEL_NAMES = {'WARNING': logging.WARNING,
+	                   'INFO': logging.INFO,
+	                   'DEBUG': logging.DEBUG}     
 
 
 	def __init__(self, stdin=None, stdout=None, stderr=None):
@@ -66,10 +75,52 @@ class App:
 		return arg_parser
 
 	@staticmethod
-	def _load_formatters():
-		return {'table': TableFormatter,
-		         'list': ListFormatter,
-		          'csv': CsvFormatter}
+	def get_log_configuration_file():
+		""" Path to configuration file.
+
+	    Returns path to configuration file in your home directory.
+	    """
+
+		return Path.home() / config.CONFIG_FILE
+
+	def clear_configurate(self):
+	    """ Clear configurate file for weather site.
+	    """
+
+	    os.remove(self.get_log_configuration_file())
+
+	def get_log_configuration(self):
+		""" Returns configurated logging level, logging output, logfile name.
+		"""
+
+		configuration = configparser.ConfigParser()
+		console_level = logging.WARNING
+		log_output = 'console'
+		log_filename = 'weatherapp.log'
+
+		try:
+			configuration.read(self.get_log_configuration_file())
+		except (configparser.Error, configparser.ParsingError,
+			    configparser.MissingSectionHeaderError):
+		    self.clear_configurate()
+		    msg = 'Error!'
+		    if self.options.debug:
+		    	self.logger.exception(msg)
+		    else:
+		    	self.logger.error(msg)
+		    raise ConfigParserError('Bad configuration file. Please '
+		    	         'reconfigurate your provider: ', self.name).action()
+		else:
+		 	if 'App' in configuration.sections():
+		 		app_config = configuration['App']
+		 		log_level = app_config.get('log-level', '')
+		 		if log_level:
+		 			log_level = self.LOG_LEVEL_NAMES.get(log_level, 
+		 				                                     logging.WARNING)
+		 		log_output = app_config.get('log-output', '')
+		 		log_filename = app_config.get('log-filename', '')
+
+		return console_level, log_output, log_filename  
 
 	def configure_logging(self):
 		""" Create logging handlers for any log output.
@@ -78,19 +129,24 @@ class App:
 		root_logger = logging.getLogger('')
 		root_logger.setLevel(logging.DEBUG)
 
-		console = logging.StreamHandler()
-		console_level = self.LOG_LEVEL_MAP.get(self.options.verbose_level,
-			                                   logging.WARNING)
-		console.setLevel(console_level)
-		formatter = logging.Formatter(config.DEFAULT_MESSAGE_FORMAT)
-		console.setFormatter(formatter)
+		log_level, log_output, log_filename = self.get_log_configuration()
 
-		fl = logging.FileHandler('app.log')
-		fl.setLevel(logging.ERROR)
-		fl.setFormatter(formatter)
+		if self.options.verbose_level:
+		 	log_level = self.LOG_LEVEL_MAP.get(self.options.verbose_level,
+			                                       logging.WARNING)
 
-		root_logger.addHandler(console)
-		root_logger.addHandler(fl)
+		if log_output == 'console':
+			console = logging.StreamHandler()
+			console.setLevel(log_level)
+			formatter = logging.Formatter(config.DEFAULT_MESSAGE_FORMAT)
+			console.setFormatter(formatter)
+			root_logger.addHandler(console)
+		else:
+			fl = logging.FileHandler(log_filename)
+			fl.setLevel(log_level)
+			formatter = logging.Formatter(config.DEFAULT_MESSAGE_FORMAT)
+			fl.setFormatter(formatter)
+			root_logger.addHandler(fl)
 
 	def produce_output(self, title, location, data, argv):
 	    """ Displays the final result of the program
