@@ -1,16 +1,16 @@
 """ App exceptions
 """
 
-class ProgramError(Exception):
+from weatherapp.core.abstract import Command
+
+
+class ProgramError(Command, Exception):
 
 	name = 'ProgramError'
 
-	def __init__(self, data, name1):
-		self.data = data
-		self.name1 = name1
 
-	def action(self):
-		print(f'{self.name}, {self.name1}: {self.data}')
+	def run(self,data, module_name):
+		self.app.stdout.write(f'{self.name}, {module_name}: {data}\n')
 
 
 class WeatherProviderError(ProgramError):
@@ -22,16 +22,16 @@ class RequestError(WeatherProviderError):
 
 	name = 'RequestError'
 
-	def action(self):
-		print(f'{self.name}: {self.data}. Location = {self.name1} ???')
+	def run(self, data, location):
+		self.app.stdout.write(f'{self.name}: {data}. Location = {location} ???\n')
 
 
 class ConfigParserError(WeatherProviderError):
 	
 	name = 'ConfigParserError'
 
-	def action(self):
-		print(f'{self.name}: {self.data}{self.name1}')
+	def run(self, data, module_name):
+		self.app.stdout.write(f'{self.name}: {data} {module_name}\n')
 				
 
 class AppRunError(ProgramError):
