@@ -43,3 +43,8 @@ class CommandManager(Manager):
 
 	def __getitem__(self, name):
 		return self._commands[name]
+
+	def __iter__(self):
+		for key, value in self._commands.items():
+			yield key, value
+
