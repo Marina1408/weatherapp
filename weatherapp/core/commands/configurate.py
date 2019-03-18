@@ -36,7 +36,7 @@ class Configurate(Command):
 		else:
 			if self.app.options.reset_defaults:
 				self.clear_configurate()
-				self.app.stdout.write('The configuration file is deleted! \n')
+				self.app.stdout.write('The configuration file is deleted!\n')
 			else:
 				self.logging_configuration()
 
@@ -174,8 +174,8 @@ class Configurate(Command):
 		if check:
 			self.save_log_configuration(log_filename=log_filename)
 		else:
-			self.app.stdout.write('You inputed incorrect name of log file!\n'
-	    		                  'Input againe. \n')
+			self.app.stdout.write('You entered incorrect log file name!\n'
+	    		                  'Please, enter again. \n')
 
 		
 
