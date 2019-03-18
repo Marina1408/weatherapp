@@ -59,10 +59,9 @@ class Configurate(Command):
 				self.logger.exception(msg)
 			else:
 				self.logger.error(msg)
-			raise ConfigurateCommandError(
-	    	    		 'You have entered the wrong data format!! \n'
-	    	    		 'Repeat again, input a number.', 
-	    	    		  name1=self.name).action()
+			raise ConfigurateCommandError(self.app).run((
+				'You have entered the wrong data format!!\nRepeat'
+				' again, input a number.'), self.name)
 
 		if selected_index in menu:
 			if selected_index == 1:
@@ -72,11 +71,9 @@ class Configurate(Command):
 			elif selected_index == 3:
 				self.logfile_name()
 		else:
-			raise ConfigurateCommandError(
-	    	    		 'You have entered a' 
-	    	    		 'non-existent number in the list!! \n'
-	    	    		 'Repeat again, input a number.', 
-	    	    		  name1=self.name).action()
+			raise ConfigurateCommandError(self.app).run((
+				'You have entered a non-existent number in the list!!\n'
+				'Repeat again, input a number.'), self.name)
 
 	def login_level(self):
 		""" Choice logging level.
@@ -97,20 +94,17 @@ class Configurate(Command):
 				self.logger.exception(msg)
 			else:
 				self.logger.error(msg)
-			raise ConfigurateCommandError(
-	    	    		 'You have entered the wrong data format!! \n'
-	    	    		 'Repeat again, input a number.', 
-	    	    		  name1=self.name).action()			
+			raise ConfigurateCommandError(self.app).run((
+				'You have entered the wrong data format!!\nRepeat'
+				' again, input a number.'), self.name)		
 		
 		if log_level_choice in LOG_LEVEL_MAP:
 			log_level = LOG_LEVEL_MAP.get(log_level_choice)
 			self.save_log_configuration(log_level=log_level)
 		else:
-			raise ConfigurateCommandError(
-	    	    		 'You have entered a' 
-	    	    		 'non-existent number in the list!! \n'
-	    	    		 'Repeat again, input a number.', 
-	    	    		  name1=self.name).action()
+			raise ConfigurateCommandError(self.app).run((
+				'You have entered a non-existent number in the list!!\n'
+				'Repeat again, input a number.'), self.name)
 
 	def save_log_configuration(self, log_level='INFO', log_output='console', 
 		                       log_filename='weatherapp.log'):
@@ -147,20 +141,17 @@ class Configurate(Command):
 				self.logger.exception(msg)
 			else:
 				self.logger.error(msg)
-			raise ConfigurateCommandError(
-	    	    		 'You have entered the wrong data format!! \n'
-	    	    		 'Repeat again, input a number.', 
-	    	    		  name1=self.name).action()		
+			raise ConfigurateCommandError(self.app).run((
+				'You have entered the wrong data format!!\nRepeat'
+				' again, input a number.'), self.name)
 		
 		if log_output_choice in LOG_OUTPUT_MAP:
 			log_output = LOG_OUTPUT_MAP.get(log_output_choice)
 			self.save_log_configuration(log_output=log_output)
 		else:
-			raise ConfigurateCommandError(
-	    	    		 'You have entered a' 
-	    	    		 'non-existent number in the list!! \n'
-	    	    		 'Repeat again, input a number.', 
-	    	    		  name1=self.name).action()
+			raise ConfigurateCommandError(self.app).run((
+				'You have entered a non-existent number in the list!!\n'
+				'Repeat again, input a number.'), self.name)
 
 	def logfile_name(self):
 		""" Input the name of logfile.
