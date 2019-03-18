@@ -108,8 +108,8 @@ class App:
 		    	self.logger.exception(msg)
 		    else:
 		    	self.logger.error(msg)
-		    raise ConfigParserError('Bad configuration file. Please '
-		    	         'reconfigurate your provider: ', self.name).action()
+		    raise ConfigParserError(self.app).run(('Bad configuration file.\n'
+		    	          'Please reconfigurate your provider: '), self.name)
 		else:
 		 	if 'App' in configuration.sections():
 		 		app_config = configuration['App']
@@ -117,8 +117,9 @@ class App:
 		 		if log_level:
 		 			log_level = self.LOG_LEVEL_NAMES.get(log_level, 
 		 				                                     logging.WARNING)
-		 		log_output = app_config.get('log-output', '')
-		 		log_filename = app_config.get('log-filename', '')
+		 		log_output = app_config.get('log-output', 'console')
+		 		log_filename = app_config.get('log-filename', 
+		 			                          'weatherapp.log')
 
 		return console_level, log_output, log_filename  
 
