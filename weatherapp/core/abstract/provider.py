@@ -126,13 +126,14 @@ class WeatherProvider(Command):
 	    		self.save_cache(url, page_source)
 	    	return page_source.decode('utf-8')
 	    except (UnboundLocalError, urllib.error.HTTPError):
-	        msg = 'Error!'
-	        if self.app.options.debug:
-	        	self.logger.exception(msg)
-	        else:
-	        	self.logger.error(msg)
-	        raise RequestError(
-	        		      'Incorrectly set location!', self.location).action()
+	    	self.clear_configurate()
+	    	msg = 'Error!'
+	    	if self.app.options.debug:
+	    		self.logger.exception(msg)
+	    	else:
+	    		self.logger.error(msg)
+	    	raise RequestError(self.app).run('Incorrectly set location!', 
+	        	                             self.location)
 	    
 	def _get_configuration(self):
 		""" Returns configurated location name and url
@@ -152,8 +153,8 @@ class WeatherProvider(Command):
 		    	self.logger.exception(msg)
 		    else:
 		    	self.logger.error(msg)
-		    raise ConfigParserError('Bad configuration file. Please '
-		    	         'reconfigurate your provider: ', self.name).action()		    	
+		    raise ConfigParserError(self.app).run(('Bad configuration file. '
+		    	          'Please reconfigurate your provider: '), self.name)		    	
 
 		if self.get_name() in parser.sections():
 			location_config = parser[self.get_name()]
