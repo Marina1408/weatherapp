@@ -25,7 +25,7 @@ def timer(func):
 		start_time = time.perf_counter()
 		result = func(*args, **kwargs)
 		run_time = time.perf_counter() - start_time
-		self.app.stdout.write(f"Finished {func.__name__!r} in {run_time:.4f} secs \n")
+		print(f"Finished {func.__name__!r} in {run_time:.4f} secs")
 		return result
 	return wrapper
 
@@ -34,8 +34,8 @@ def print_args(func):
 	    before it is executed
 	"""
 	def wrapper(*args, **kwargs):
-		self.app.stdout.write('Function argumens: \n')
-		self.app.stdout.write(*args, **kwargs + '\n')
+		print('Function argumens: ')
+		print(*args, **kwargs )
 		return func(*args, **kwargs)
 	return wrapper
 
@@ -44,7 +44,7 @@ def count_function(func):
 	def wrapper(*args, **kwargs):
 		wrapper.count += 1
 		result = func(*args, **kwargs)
-		self.app.stdout.write(f"Function {func.__name__!r} was called {wrapper.count} times \n")
+		print(f"Function {func.__name__!r} was called {wrapper.count} times")
 		return result
 	wrapper.count = 0
 	return wrapper
