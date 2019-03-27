@@ -71,6 +71,11 @@ class AppTestCase(unittest.TestCase):
 			os.remove(Path.home() / self.config_file)
 		self.assertTrue(config_path)
 
+		if not config_path.exists():
+			n = 1
+
+		self.assertEqual(n, 1)
+
 	def get_log_configuration(self):
 		""" Test 'get_log_configuration' method.
 		""" 
@@ -157,6 +162,7 @@ class AppTestCase(unittest.TestCase):
 
 		with open((Path.home() / file), 'r') as f:
 			a = f.read()
+
 		self.assertEqual(a, 'title\nlocation\ninfo')
 
 		os.remove(Path.home() / file)
