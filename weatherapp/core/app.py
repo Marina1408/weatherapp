@@ -19,7 +19,6 @@ from weatherapp.core import decorators
 from weatherapp.core import config
 
 
-@decorators.singleton
 class App:
 
 	""" Wether aggregator application.
