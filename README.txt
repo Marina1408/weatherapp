@@ -18,3 +18,84 @@ Weatherapp.core:
 * the ability to add a new resource without changing the implementation of the main functional;
 * the possibility of further development and development of programs.
 
+
+Installation
+------------
+
+Download the repository to your machine and use the following command to locally install the package:
+
+$ pip install .
+
+Download repositories of the weather providers here:
+
+weatherapp.accu       <https://github.com/Marina1408/weatherapp.accu>
+weatherapp.rp5        <https://github.com/Marina1408/weatherapp.rp5>
+weatherapp.sinoptik   <https://github.com/Marina1408/weatherapp.sinoptik>
+
+Install each of these packages:
+
+$ pip install .
+
+
+Usage:
+------
+
+* get the weather data from all providers
+
+  $ wfapp
+
+* get weather data from a specific provider
+
+  $ wfapp [provider id]
+
+* get a list of all providers:
+
+  $ wfapp providers
+
+* get the weather data for tomorrow:
+
+  $ wfapp --tomorrow
+  $ wfapp [provider id] --tomorrow
+
+* get the weather data into a text file:
+
+  $ $ wfapp --write_file
+  $ wfapp [provider id] --write_file
+
+* get the weather data in a specific format(a table, a list or a CSV file, by default the list is set):
+
+  $ wfapp --formatter=table
+  $ wfapp --formatter=csv
+
+* clear cache:
+
+  $ wfapp clear_cache
+
+* update cache:
+
+  $ wfapp --refresh
+  $ wfapp [provider id] --refresh
+
+* select a location to get weather data from a specific provider:
+
+  $ wfapp configurate [provider id]
+
+* remove default locations in the configuration file
+
+  $ wfapp configurate --reset_defaults
+
+* configure login, namely to set the level of logging, where to log (in the console or in a file), specify the name of the log file
+
+  $ wfapp configurate
+
+* see a full trancback for errors:
+
+  $ wfapp [command] --debug
+
+* for setting the login level of the program(default WARNING) INFO:
+
+  $ wfapp [command] -v  
+
+* for setting the login level of the program(default WARNING) DEBUG:
+
+  $ wfapp [command] -vv  
