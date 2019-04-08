@@ -67,6 +67,26 @@ Usage:
   $ wfapp --formatter=table
   $ wfapp --formatter=csv
 
+* you can also change (if you want) formatter table parameters:
+
+  - set the right or centre alignment(by default to set the left alignment):
+
+    $ wfapp --formatter=table align=r
+
+    $ wfapp --formatter=table align=c
+
+  - specify the padding width(by default to set '1'):
+
+    $ wfapp --formatter=table -padding_width=[the specified number]
+
+  - set the style of vertical separators(by default to set '2'):
+
+    $ wfapp --formatter=table --vrules=[the specified number from 0 to 2]
+
+  - set the style of horizontal splitters(by default to set '0'):
+
+    $ wfapp --formatter=table -hrules=[the specified number from 0 to 3]
+
 * clear cache:
 
   $ wfapp clear_cache
