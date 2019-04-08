@@ -1,4 +1,4 @@
-                      **Project "weatherapp.core"**
+**Project "weatherapp.core"**
 
 
 What is it?
@@ -34,90 +34,95 @@ weatherapp.sinoptik   <https://github.com/Marina1408/weatherapp.sinoptik>
 
 Install each of these packages:
 
-$ pip install .
+  $ pip install .
 
 
 Usage:
 ------
 
-* get the weather data from all providers
+* get the weather data from all providers:
 
-  $ wfapp
+    $ wfapp
 
-* get weather data from a specific provider
+* get weather data from a specific provider:
 
-  $ wfapp [provider id]
+    $ wfapp [provider id]
 
 * get a list of all providers:
 
-  $ wfapp providers
+    $ wfapp providers
 
 * get the weather data for tomorrow:
 
-  $ wfapp --tomorrow
-  $ wfapp [provider id] --tomorrow
+    $ wfapp --tomorrow
+    $ wfapp [provider id] --tomorrow
 
 * get the weather data into a text file:
 
-  $ $ wfapp --write_file
-  $ wfapp [provider id] --write_file
+    $ wfapp --write_file
+    $ wfapp [provider id] --write_file
 
 * get the weather data in a specific format(a table, a list or a CSV file, by default the list is set):
 
-  $ wfapp --formatter=table
-  $ wfapp --formatter=csv
+    $ wfapp --formatter=table
+    $ wfapp --formatter=csv
 
 * you can also change (if you want) formatter table parameters:
 
+
   ** set the right or centre alignment(by default to set the left alignment):
 
-    $ wfapp --formatter=table align=r
+       $ wfapp --formatter=table align=r
 
-    $ wfapp --formatter=table align=c
+       $ wfapp --formatter=table align=c
+
 
   ** specify the padding width(by default to set '1'):
 
-    $ wfapp --formatter=table -padding_width=[the specified number]
+       $ wfapp --formatter=table -padding_width=[the specified number]
+
 
   ** set the style of vertical separators(by default to set '2'):
 
-    $ wfapp --formatter=table --vrules=[the specified number from 0 to 2]
+       $ wfapp --formatter=table --vrules=[the specified number from 0 to 2]
+
 
   ** set the style of horizontal splitters(by default to set '0'):
 
-    $ wfapp --formatter=table -hrules=[the specified number from 0 to 3]
+       $ wfapp --formatter=table -hrules=[the specified number from 0 to 3]
+
 
 * clear cache:
 
-  $ wfapp clear_cache
+    $ wfapp clear_cache
 
 * update cache:
 
-  $ wfapp --refresh
-  $ wfapp [provider id] --refresh
+    $ wfapp --refresh
+    $ wfapp [provider id] --refresh
 
 * select a location to get weather data from a specific provider:
 
-  $ wfapp configurate [provider id]
+    $ wfapp configurate [provider id]
 
 * remove default locations in the configuration file
 
-  $ wfapp configurate --reset_defaults
+    $ wfapp configurate --reset_defaults
 
 * configure login, namely to set the level of logging, where to log (in the console or in a file), specify the name of the log file
 
-  $ wfapp configurate
+    $ wfapp configurate
 
 * see a full trancback for errors:
 
-  $ wfapp [command] --debug
+    $ wfapp [command] --debug
 
 * for setting the login level of the program(default WARNING) INFO:
 
-  $ wfapp [command] -v  
+    $ wfapp [command] -v  
 
 * for setting the login level of the program(default WARNING) DEBUG:
 
-  $ wfapp [command] -vv 
+    $ wfapp [command] -vv 
 
 
