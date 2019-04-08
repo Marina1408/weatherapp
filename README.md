@@ -43,30 +43,33 @@ Usage:
 
 * get the weather data from all providers:
 
-     $ wfapp
+      $ wfapp
 
 * get weather data from a specific provider:
 
-     $ wfapp [provider id]
+      $ wfapp [provider id]
 
 * get a list of all providers:
 
-     $ wfapp providers
+      $ wfapp providers
 
 * get the weather data for tomorrow:
 
-     $ wfapp --tomorrow
-     $ wfapp [provider id] --tomorrow
+      $ wfapp --tomorrow
+
+      $ wfapp [provider id] --tomorrow
 
 * get the weather data into a text file:
 
-     $ wfapp --write_file
-     $ wfapp [provider id] --write_file
+      $ wfapp --write_file
+
+      $ wfapp [provider id] --write_file
 
 * get the weather data in a specific format(a table, a list or a CSV file, by default the list is set):
 
-     $ wfapp --formatter=table
-     $ wfapp --formatter=csv
+      $ wfapp --formatter=table 
+
+      $ wfapp --formatter=csv
 
 * you can also change (if you want) formatter table parameters:
 
@@ -95,35 +98,36 @@ Usage:
 
 * clear cache:
 
-     $ wfapp clear_cache
+      $ wfapp clear_cache
 
 * update cache:
 
-     $ wfapp --refresh
-     $ wfapp [provider id] --refresh
+      $ wfapp --refresh
+
+      $ wfapp [provider id] --refresh
 
 * select a location to get weather data from a specific provider:
 
-     $ wfapp configurate [provider id]
+      $ wfapp configurate [provider id]
 
 * remove default locations in the configuration file
 
-     $ wfapp configurate --reset_defaults
+      $ wfapp configurate --reset_defaults
 
 * configure login, namely to set the level of logging, where to log (in the console or in a file), specify the name of the log file
 
-     $ wfapp configurate
+      $ wfapp configurate
 
 * see a full trancback for errors:
 
-     $ wfapp [command] --debug
+      $ wfapp [command] --debug
 
 * for setting the login level of the program(default WARNING) INFO:
 
-     $ wfapp [command] -v  
+      $ wfapp [command] -v  
 
 * for setting the login level of the program(default WARNING) DEBUG:
 
-     $ wfapp [command] -vv 
+      $ wfapp [command] -vv 
 
 
