@@ -25,7 +25,7 @@ Installation
 
 Download the repository to your machine and use the following command to locally install the package:
 
-   $ pip install .
+     $ pip install .
 
 Download repositories of the weather providers here:
 
@@ -35,7 +35,7 @@ Download repositories of the weather providers here:
 
 Install each of these packages:
 
-   $ pip install .
+     $ pip install .
 
 
 Usage:
